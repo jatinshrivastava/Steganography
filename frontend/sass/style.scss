@@ -1,0 +1,63 @@
+// Main Style
+
+// General
+@import "variables";
+@import "vendor/bootstrap-includes";
+@import "helpers/all";
+@import "global";
+@import "components/all";
+@import "pages/all";
+
+#django-background {
+    color: #092e20;
+    font-size: 11pt;
+    background-repeat: no-repeat;
+    background-size: auto 200px;
+    background-position: center;
+    height: 300px;
+    background-image: url('../assets/images/django-logo-positive.png');
+}
+
+#django-logo-wrapper {
+    color: #092e20;
+    & > img {
+        width: 100px;
+    }
+    margin-bottom: 1em;
+}
+
+.mt-6 {
+  margin-top: 6rem !important;
+}
+
+.mt-7 {
+  margin-top: 8rem !important;
+}
+
+.color-dark-purple {
+  color: #2D1E2F;
+}
+
+.bg-color-dark-purple {
+  background-color: #2D1E2F !important;
+}
+
+.color-red {
+  color: #F72C25;
+}
+
+.bg-color-red {
+  background-color: #F72C25;
+}
+
+.color-xanthous {
+  color: #F7B32B;
+}
+
+.color-canilla {
+  color: #FCF6B1;
+}
+
+.color-celadon {
+  color: #A9E5BB;
+}

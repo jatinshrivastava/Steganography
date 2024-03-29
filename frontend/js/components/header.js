@@ -10,7 +10,7 @@ import { getUserDetails, logoutUser } from "../store/services";
 function Header(props) {
   const dispatch = useDispatch();
   let [showSubMenu, setShowSubMenu] = useState(false);
-  const { isLoggedIn, user } = props;
+  const { isLoggedIn, setIsLoggedIn, user } = props;
 
   const openSubMenu = () => {
     setShowSubMenu(!showSubMenu);
@@ -24,6 +24,7 @@ function Header(props) {
         if (response.payload.status === 200) {
           // Handle successful login
           localStorage.removeItem("user");
+          setIsLoggedIn(false);
           console.log("Logout successful");
           // dispatch(setIsLogged());
           window.location.reload();
@@ -88,7 +89,8 @@ function Header(props) {
 }
 
 Header.propTypes = {
-  isLoggedIn: PropTypes.string.isRequired,
+  isLoggedIn: PropTypes.bool.isRequired,
+  setIsLoggedIn: PropTypes.func.isRequired,
   user: PropTypes.object.isRequired,
 };
 

@@ -27,7 +27,7 @@ function Login({ setIsLoggedIn, setUser }) {
             console.log("Login successful");
             // dispatch(setIsLogged());
             localStorage.setItem("user", JSON.stringify(response.payload));
-            setIsLoggedIn(localStorage.getItem("user"));
+            setIsLoggedIn(true);
             setUser(response.payload);
             setUsername("");
             setPassword("");
@@ -87,7 +87,7 @@ function Login({ setIsLoggedIn, setUser }) {
 }
 
 Login.propTypes = {
-  setIsLoggedIn: PropTypes.func.isRequired,
+  setIsLoggedIn: PropTypes.bool.isRequired,
   setUser: PropTypes.func.isRequired,
 };
 

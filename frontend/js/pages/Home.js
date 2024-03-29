@@ -8,7 +8,7 @@ import DjangoImgSrc from "../../assets/images/django-logo-negative.png";
 import { fetchRestCheck } from "../store/rest_check";
 import { uploadFile, encodeData } from "../store/services";
 
-const Home = ({ setIsLoggedIn }) => {
+const Home = ({ isLoggedIn, user }) => {
   const dispatch = useDispatch();
   const restCheck = useSelector((state) => state.restCheck);
   const [plainTextFile, setplaintextFile] = useState(null);
@@ -23,6 +23,8 @@ const Home = ({ setIsLoggedIn }) => {
 
   useEffect(() => {
     const action = fetchRestCheck();
+    console.log("isLoggedIn is ", isLoggedIn);
+    console.log("user is ", user);
     dispatch(action);
   }, [dispatch]);
 
@@ -215,7 +217,8 @@ const Home = ({ setIsLoggedIn }) => {
 };
 
 Home.propTypes = {
-  setIsLoggedIn: PropTypes.func.isRequired,
+  isLoggedIn: PropTypes.string.isRequired,
+  user: PropTypes.object.isRequired,
 };
 
 export default Home;

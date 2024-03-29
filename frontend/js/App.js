@@ -10,7 +10,7 @@ import configureStore from "./store";
 
 const store = configureStore({});
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("user"));
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
 
   return (
@@ -18,12 +18,19 @@ function App() {
       <Provider store={store}>
         <BrowserRouter>
           {isLoggedIn ? (
-            <Header isLoggedIn={isLoggedIn} user={user} />
+            <Header
+              isLoggedIn={isLoggedIn}
+              setIsLoggedIn={setIsLoggedIn}
+              user={user}
+            />
           ) : (
-            <Header isLoggedIn={isLoggedIn} />
+            <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
           )}
           <Routes>
-            <Route element={<Home setIsLoggedIn={setIsLoggedIn} />} path="/" />
+            <Route
+              element={<Home isLoggedIn={isLoggedIn} user={user} />}
+              path="/"
+            />
             <Route
               element={
                 <Login setIsLoggedIn={setIsLoggedIn} setUser={setUser} />

@@ -1,11 +1,11 @@
 import PropTypes from "prop-types";
 import React, { useState, useEffect } from "react";
 import "./header.scss";
-import "../../sass/style.scss";
+import "../../../sass/style.scss";
 
 import { useDispatch, useSelector } from "react-redux";
-import { setIsLogged } from "../store/actions/actions";
-import { getUserDetails, logoutUser } from "../store/services";
+import { setIsLogged } from "../../store/actions/actions";
+import { getUserDetails, logoutUser } from "../../store/services";
 
 function Header(props) {
   const dispatch = useDispatch();
@@ -91,7 +91,11 @@ function Header(props) {
 Header.propTypes = {
   isLoggedIn: PropTypes.bool.isRequired,
   setIsLoggedIn: PropTypes.func.isRequired,
-  user: PropTypes.object.isRequired,
+  user: PropTypes.object,
+};
+
+Header.defaultProps = {
+  user: {},
 };
 
 export default Header;

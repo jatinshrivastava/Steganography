@@ -16,7 +16,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())
 STATIC_ROOT = base_dir_join("staticfiles")
 STATIC_URL = "/static/"
 
-MEDIA_ROOT = base_dir_join("mediafiles")
+MEDIA_ROOT = base_dir_join("media")
 MEDIA_URL = "/media/"
 
 SERVER_EMAIL = "jatinrey@gmail.com"

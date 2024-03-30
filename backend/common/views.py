@@ -1,10 +1,12 @@
 import os
+from collections.abc import Iterable
 
 from django.conf import settings
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.http import JsonResponse
 from django.views import generic
 
 from rest_framework import status, viewsets
@@ -12,7 +14,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from common.models import UploadedFile
+from common.models import UploadedFile, SteganographyRecord
 from common.utils.utils import check_file_lengths_valid, encode_message, get_file_path, \
     encode_message_simple, get_magic_number, file_to_bitarray, createRecord, get_file_from_path
 
@@ -178,3 +180,27 @@ class RestViewSet(viewsets.ViewSet):
         # For demonstration, we'll just return the parameters received
         return Response({"plaintextFileName": plaintext_file_name, "messageFileName": message_file_name,
                          "startingBit": starting_bit, "length": length, "mode": mode}, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="get-files",
+    )
+    def get_files(self, request):
+        files: Iterable[SteganographyRecord] = SteganographyRecord.objects.all()
+
+        files_list = []
+        for file in files:
+            data = {'user_id': file.user.id, 'skip_bits': file.skip_bits, 'length': file.length, 'mode': file.mode, 'created': file.created}
+            plaintext_data = {'file_name': os.path.basename(file.plaintext_file.name), 'file_path': os.path.relpath(file.plaintext_file.path)}
+            message_data = {'file_name': os.path.basename(file.message_file.name), 'file_path': os.path.relpath(file.message_file.path)}
+            encoded_data = {'file_name': os.path.basename(file.encoded_file.name), 'file_path': os.path.relpath(file.encoded_file.path)}
+
+            data['plaintext_file'] = plaintext_data
+            data['message_file'] = message_data
+            data['encoded_file'] = encoded_data
+
+            files_list.append(data)
+
+        return JsonResponse({"status": 200, "files": files_list}, status=status.HTTP_200_OK)

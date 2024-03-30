@@ -50,6 +50,12 @@ export const uploadFile = createAsyncThunk(
   },
 );
 
+// File Upload
+export const getFiles = createAsyncThunk("files/get", async () => {
+  const res = await api.post("/api/rest/get-files/");
+  return res.data;
+});
+
 // File Encode
 export const encodeData = createAsyncThunk(
   "fileEncoding/encode",

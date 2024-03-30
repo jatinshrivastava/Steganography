@@ -41,7 +41,7 @@ def encoded_directory_path(instance, filename):
     return os.path.join(directory, filename)
 
 
-class UploadedFile(models.Model):
+class UploadedFile(IndexedTimeStampedModel):
     file = models.FileField(upload_to='uploads/', null=False)  # Use ImageField for image files
 
     # Add other fields as needed
@@ -50,7 +50,7 @@ class UploadedFile(models.Model):
         return f"MyFile {self.pk}"
 
 
-class SteganographyRecord(models.Model):
+class SteganographyRecord(IndexedTimeStampedModel):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE, null=False)
     plaintext_file = models.FileField(upload_to=plaintext_directory_path, null=False)
     message_file = models.FileField(upload_to=message_directory_path, null=False)

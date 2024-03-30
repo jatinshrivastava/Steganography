@@ -26,6 +26,10 @@
     margin-bottom: 1em;
 }
 
+.dropdown-menu.show {
+  display: block;
+}
+
 .mt-6 {
   margin-top: 6rem !important;
 }
@@ -60,4 +64,23 @@
 
 .color-celadon {
   color: #A9E5BB;
+}
+
+.clear-dropdown-toggle,
+.clear-dropdown-toggle:hover,
+.clear-dropdown-toggle:focus,
+.clear-dropdown-toggle:active {
+  background-color: transparent !important;
+  width: 1rem;
+  border: transparent;
+
+}
+
+.dropdown-toggle::after {
+  display: none;
+}
+
+.dropdown-icon {
+  width: 1rem;
+  color: black;
 }

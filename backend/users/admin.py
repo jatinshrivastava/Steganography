@@ -31,11 +31,11 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(UploadedFile)
 class UploadedFileAdmin(admin.ModelAdmin):
-    list_display = ['id', 'file']
+    list_display = ['id', 'file', 'created', 'modified']
     pass
 
 
 @admin.register(SteganographyRecord)
 class SteganographyRecordAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'plaintext_file', 'message_file', 'encoded_file', 'skip_bits', 'length', 'mode']
+    list_display = ['id', 'user', 'plaintext_file', 'message_file', 'encoded_file', 'skip_bits', 'length', 'mode', 'created', 'modified']
     pass

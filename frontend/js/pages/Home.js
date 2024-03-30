@@ -1,16 +1,21 @@
 import PropTypes from "prop-types";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEllipsisVertical } from "@fortawesome/free-solid-svg-icons";
 import React, { useState, useEffect } from "react";
-import Button from "react-bootstrap/Button";
 import { useDispatch, useSelector } from "react-redux";
 import "../../sass/style.scss";
 
-import DjangoImgSrc from "../../assets/images/django-logo-negative.png";
+import Dropdown from "react-bootstrap/Dropdown";
+import "../constants/fontawesome";
+
+import Loader from "../components/loader/Loader";
 import { fetchRestCheck } from "../store/rest_check";
-import { uploadFile, encodeData } from "../store/services";
+import { uploadFile, encodeData, getFiles } from "../store/services";
 
 const Home = ({ isLoggedIn, user }) => {
   const dispatch = useDispatch();
   const restCheck = useSelector((state) => state.restCheck);
+  const [loading, setLoading] = useState(true);
   const [plainTextFile, setplaintextFile] = useState(null);
   const [messageFile, setMessageFile] = useState(null);
   const [plaintextData, setPlaintextData] = useState(null);
@@ -18,13 +23,19 @@ const Home = ({ isLoggedIn, user }) => {
   const [startingBit, setStartingBit] = useState(0);
   const [length, setLength] = useState(1);
   const [mode, setMode] = useState("fixed");
+  const [files, setFiles] = useState([]);
 
   const [showBugComponent, setShowBugComponent] = useState(false);
 
+  const [isOpen, setIsOpen] = useState(false);
+  const toggleDropdown = () => {
+    console.log("clicked!");
+    setIsOpen(!isOpen);
+  };
+
   useEffect(() => {
     const action = fetchRestCheck();
-    console.log("isLoggedIn is ", isLoggedIn);
-    console.log("user is ", user);
+    loadFiles();
     dispatch(action);
   }, [dispatch]);
 
@@ -35,6 +46,22 @@ const Home = ({ isLoggedIn, user }) => {
   function handleMessageFileChange(event) {
     setMessageFile(event.target.files[0]);
   }
+
+  const loadFiles = () => {
+    dispatch(getFiles())
+      .then((response) => {
+        if (response.payload.status === 200) {
+          setFiles(response.payload.files);
+        }
+        return 0;
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   const handlePlainTextFileSubmit = (e) => {
     e.preventDefault();
@@ -122,10 +149,13 @@ const Home = ({ isLoggedIn, user }) => {
       });
   };
 
+  if (loading) {
+    return <div>{loading && <Loader />}</div>;
+  }
   return (
     <div className="container mb-5 mt-6">
-      <div className="row">
-        <div className="col d-flex justify-content-center">
+      <div className="col">
+        <div className="row d-flex justify-content-center">
           <div className="card shadow-sm mt-5 p-4 w-50">
             {plaintextData && plaintextData.file_name ? (
               <h4>Plaintext File Uploaded</h4>
@@ -211,13 +241,64 @@ const Home = ({ isLoggedIn, user }) => {
             )}
           </div>
         </div>
+
+        <div className="row mt-5 row-cols-1 row-cols-md-4 g-4">
+          {files.map((file, index) => {
+            const fileName = file.encoded_file.file_name;
+            return (
+              <div key={file.id} className="col">
+                <div className="card h-100">
+                  <div className="card-header d-flex justify-content-between align-items-center">
+                    <span>
+                      <p className="card-text">
+                        {fileName.length > 16
+                          ? `${fileName.slice(0, 16)}...`
+                          : fileName}
+                      </p>
+                    </span>
+
+                    <Dropdown>
+                      <Dropdown.Toggle
+                        className="clear-dropdown-toggle"
+                        id="dropdown-basic"
+                        // variant="success"
+                      >
+                        <FontAwesomeIcon
+                          className="dropdown-icon"
+                          icon={faEllipsisVertical}
+                        />
+                      </Dropdown.Toggle>
+
+                      <Dropdown.Menu>
+                        <Dropdown.Item href="#/action-1">Decode</Dropdown.Item>
+                        <Dropdown.Item href="#/action-2">
+                          Download
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        <Dropdown.Item href="#/action-3">Delete</Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  </div>
+                  <img
+                    alt="..."
+                    className="card-img-top"
+                    src={file.plaintext_file.file_path}
+                  />
+                  <div className="card-body">
+                    <p className="card-text">{fileName}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 };
 
 Home.propTypes = {
-  isLoggedIn: PropTypes.string.isRequired,
+  isLoggedIn: PropTypes.bool.isRequired,
   user: PropTypes.object.isRequired,
 };
 

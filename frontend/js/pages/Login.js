@@ -87,7 +87,7 @@ function Login({ setIsLoggedIn, setUser }) {
 }
 
 Login.propTypes = {
-  setIsLoggedIn: PropTypes.bool.isRequired,
+  setIsLoggedIn: PropTypes.func.isRequired,
   setUser: PropTypes.func.isRequired,
 };
 

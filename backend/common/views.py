@@ -215,7 +215,7 @@ class RestViewSet(viewsets.ViewSet):
         permission_classes=[AllowAny],
         url_path="record/delete-record",
     )
-    def delete_file(self, request):
+    def delete_record(self, request):
         encoded_file_name = request.data.get('file_name')
         try:
             first_record = SteganographyRecord.objects.filter(encoded_file__contains=encoded_file_name).first()
@@ -237,6 +237,7 @@ class RestViewSet(viewsets.ViewSet):
                             status=status.HTTP_200_OK)
 
         except Exception as e:
+            print(f"Error occured: {e}")
             return Response({"status": 404, "message": "Unable to delete file!"},
                             status=status.HTTP_200_OK)
 
@@ -258,6 +259,7 @@ class RestViewSet(viewsets.ViewSet):
                             status=status.HTTP_200_OK)
 
         except Exception as e:
+            print(f"Error occured: {e}")
             return Response({"status": 404, "message": "Unable to delete file!"},
                             status=status.HTTP_200_OK)
 

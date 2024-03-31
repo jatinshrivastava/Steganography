@@ -74,9 +74,17 @@ def auto_delete_file_on_delete(sender, instance, **kwargs):
     Deletes file from filesystem
     when corresponding `MediaFile` object is deleted.
     """
-    if instance.file:
-        if os.path.isfile(instance.file.path):
-            os.remove(instance.file.path)
+    if instance.plaintext_file:
+        if os.path.isfile(instance.plaintext_file.path):
+            os.remove(instance.plaintext_file.path)
+
+    if instance.message_file:
+        if os.path.isfile(instance.message_file.path):
+            os.remove(instance.message_file.path)
+
+    if instance.encoded_file:
+        if os.path.isfile(instance.encoded_file.path):
+            os.remove(instance.encoded_file.path)
 
 
 @receiver(models.signals.pre_save, sender=SteganographyRecord)

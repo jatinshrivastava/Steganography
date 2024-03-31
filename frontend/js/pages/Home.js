@@ -77,15 +77,17 @@ const Home = ({ isLoggedIn, user }) => {
       .then((response) => {
         if (response.payload.status === 200) {
           const allFiles = response.payload.files;
-          const currentUserEmail = user.email; // Assuming user object is accessible here
+          const userFiles = [];
+          const otherUserFiles = [];
+          const currentUserEmail = isLoggedIn && user ? user.email : ""; // Assuming user object is accessible here
 
-          // Filter files based on user's email
-          const userFiles = allFiles.filter(
-            (file) => file.user_email === currentUserEmail,
-          );
-          const otherUserFiles = allFiles.filter(
-            (file) => file.user_email !== currentUserEmail,
-          );
+          allFiles.forEach((file) => {
+            if (file.user_email === currentUserEmail) {
+              userFiles.push(file);
+            } else {
+              otherUserFiles.push(file);
+            }
+          });
 
           // Set the filtered files into state
           setUserFiles(userFiles);
@@ -300,95 +302,94 @@ const Home = ({ isLoggedIn, user }) => {
         </Modal>
       )}
       <div className="col">
-        <div className="row d-flex justify-content-center">
-          <div className="card shadow-sm mt-5 p-4 w-50">
-            {plaintextData && plaintextData.file_name ? (
-              <h4>Plaintext File Uploaded</h4>
-            ) : (
-              <form onSubmit={handlePlainTextFileSubmit}>
-                <h3>Upload Plaintext File</h3>
-                <input type="file" onChange={handlePlaintextFileChange} />
-                <button type="submit">Upload</button>
-              </form>
-            )}
-            {messageData && messageData.file_name ? (
-              <h4>Message File Uploaded</h4>
-            ) : (
-              <form onSubmit={handleMessageFileSubmit}>
-                <h3>Upload Message File</h3>
-                <input type="file" onChange={handleMessageFileChange} />
-                <button type="submit">Upload</button>
-              </form>
-            )}
-
-            {plaintextData && messageData ? (
-              <div>
-                <h3>Embedding Parameters</h3>
-                <label htmlFor="startingBit">
-                  Starting Bit (S):
-                  <input
-                    disabled={!plaintextData}
-                    id="startingBit"
-                    max={
-                      plaintextData && plaintextData.bitarray_length
-                        ? plaintextData.bitarray_length - 1
-                        : 0
-                    }
-                    min={0}
-                    type="number"
-                    value={startingBit}
-                    onChange={handleStartingBitChange}
-                  />
-                </label>
-                <br />
-                <label htmlFor="length">
-                  Length (L):
-                  <input
-                    disabled={!(plaintextData && messageData)}
-                    id="length"
-                    max={
-                      plaintextData &&
-                      plaintextData.bitarray_length &&
-                      messageData &&
-                      messageData.bitarray_length
-                        ? Math.min(
-                            plaintextData.bitarray_length,
-                            messageData.bitarray_length,
-                          )
-                        : 0
-                    }
-                    min={1}
-                    type="number"
-                    value={length}
-                    onChange={handleLengthChange}
-                  />
-                </label>
-                <p>
-                  Valid range for starting bit: 0 to{" "}
-                  {plaintextData.bitarray_length - 1}
-                  <br />
-                  Valid range for length: 1 to{" "}
-                  {Math.min(
-                    plaintextData.bitarray_length,
-                    messageData.bitarray_length,
-                  )}
-                </p>
-                <button
-                  className="btn bg-color-dark-purple text-white"
-                  type="button"
-                  onClick={handleEncodeSubmit}
-                >
-                  Encode
-                </button>
-              </div>
-            ) : (
-              <div />
-            )}
-          </div>
-        </div>
-
         {isLoggedIn && user ? (
           <div>
+            <div className="row d-flex justify-content-center">
+              <div className="card shadow-sm mt-5 p-4 w-50">
+                {plaintextData && plaintextData.file_name ? (
+                  <h4>Plaintext File Uploaded</h4>
+                ) : (
+                  <form onSubmit={handlePlainTextFileSubmit}>
+                    <h3>Upload Plaintext File</h3>
+                    <input type="file" onChange={handlePlaintextFileChange} />
+                    <button type="submit">Upload</button>
+                  </form>
+                )}
+                {messageData && messageData.file_name ? (
+                  <h4>Message File Uploaded</h4>
+                ) : (
+                  <form onSubmit={handleMessageFileSubmit}>
+                    <h3>Upload Message File</h3>
+                    <input type="file" onChange={handleMessageFileChange} />
+                    <button type="submit">Upload</button>
+                  </form>
+                )}
+
+                {plaintextData && messageData ? (
+                  <div>
+                    <h3>Embedding Parameters</h3>
+                    <label htmlFor="startingBit">
+                      Starting Bit (S):
+                      <input
+                        disabled={!plaintextData}
+                        id="startingBit"
+                        max={
+                          plaintextData && plaintextData.bitarray_length
+                            ? plaintextData.bitarray_length - 1
+                            : 0
+                        }
+                        min={0}
+                        type="number"
+                        value={startingBit}
+                        onChange={handleStartingBitChange}
+                      />
+                    </label>
+                    <br />
+                    <label htmlFor="length">
+                      Length (L):
+                      <input
+                        disabled={!(plaintextData && messageData)}
+                        id="length"
+                        max={
+                          plaintextData &&
+                          plaintextData.bitarray_length &&
+                          messageData &&
+                          messageData.bitarray_length
+                            ? Math.min(
+                                plaintextData.bitarray_length,
+                                messageData.bitarray_length,
+                              )
+                            : 0
+                        }
+                        min={1}
+                        type="number"
+                        value={length}
+                        onChange={handleLengthChange}
+                      />
+                    </label>
+                    <p>
+                      Valid range for starting bit: 0 to{" "}
+                      {plaintextData.bitarray_length - 1}
+                      <br />
+                      Valid range for length: 1 to{" "}
+                      {Math.min(
+                        plaintextData.bitarray_length,
+                        messageData.bitarray_length,
+                      )}
+                    </p>
+                    <button
+                      className="btn bg-color-dark-purple text-white"
+                      type="button"
+                      onClick={handleEncodeSubmit}
+                    >
+                      Encode
+                    </button>
+                  </div>
+                ) : (
+                  <div />
+                )}
+              </div>
+            </div>
             <h2 className="mt-5">Your Uploads</h2>
             {userFiles && userFiles.length !== 0 ? (
               <div className="row mt-2 row-cols-1 row-cols-md-5 g-4">
@@ -396,7 +397,7 @@ const Home = ({ isLoggedIn, user }) => {
                   const fileName = file.encoded_file.file_name;
                   const date = Utils.formatDate(file.created);
                   return (
-                    <div key={file.id} className="col">
+                    <div key={file.record_id} className="col">
                       <div className="card h-100">
                         <div className="card-header d-flex justify-content-between align-items-center">
                           <span>
@@ -473,11 +474,12 @@ const Home = ({ isLoggedIn, user }) => {
         <div>
           <h2 className="mt-5">All Uploads</h2>
           {files && files.length !== 0 ? (
-            <div className="row mt-5 row-cols-1 row-cols-md-4 g-4">
+            <div className="row mt-5 row-cols-1 row-cols-md-4 g-4" key="12">
               {files.map((file, index) => {
                 const fileName = file.encoded_file.file_name;
+                const date = Utils.formatDate(file.created);
                 return (
-                  <div key={file.id} className="col">
+                  <div key={file.record_id} className="col">
                     <div className="card h-100">
                       <div className="card-header d-flex justify-content-between align-items-center">
                         <span>
@@ -501,16 +503,26 @@ const Home = ({ isLoggedIn, user }) => {
                           </Dropdown.Toggle>
 
                           <Dropdown.Menu>
-                            <Dropdown.Item href="#/action-1">
+                            {/* <Dropdown.Item
+                              onClick={() => {
+                                setSelectedFileName(file.record_id);
+                                decodeFile(file.record_id);
+                              }}
+                            >
                               Decode
-                            </Dropdown.Item>
-                            <Dropdown.Item href="#/action-2">
-                              Download
-                            </Dropdown.Item>
-                            <Dropdown.Divider />
-                            <Dropdown.Item href="#/action-3">
+                            </Dropdown.Item> */}
+                            <DownloadFileButton file={file.encoded_file} />
+                            {/* <Dropdown.Divider />
+                            <Dropdown.Item
+                              onClick={() => {
+                                setSelectedFileName(
+                                  file.encoded_file.file_name,
+                                );
+                                openModal();
+                              }}
+                            >
                               Delete
-                            </Dropdown.Item>
+                            </Dropdown.Item> */}
                           </Dropdown.Menu>
                         </Dropdown>
                       </div>
@@ -520,7 +532,14 @@ const Home = ({ isLoggedIn, user }) => {
                         src={file.plaintext_file.file_path}
                       />
                       <div className="card-body">
-                        <p className="card-text">{fileName}</p>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <Link href="/#" id="t-1" title={file.user_name}>
+                            <Avatar name={file.user_name} />
+                          </Link>
+                          <span>
+                            <p className="card-text">{date}</p>
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -538,7 +557,7 @@ const Home = ({ isLoggedIn, user }) => {
 
 Home.propTypes = {
   isLoggedIn: PropTypes.bool.isRequired,
-  user: PropTypes.object.isRequired,
+  user: PropTypes.object,
 };
 
 export default Home;

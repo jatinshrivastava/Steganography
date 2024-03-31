@@ -4,7 +4,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 import { setIsLogged } from "../store/actions/actions";
-import { loginUser } from "../store/services"; // Import the loginUser API call
+import { Services } from "../store/services"; // Import the loginUser API call
 
 function Login({ setIsLoggedIn, setUser }) {
   const dispatch = useDispatch();
@@ -18,7 +18,7 @@ function Login({ setIsLoggedIn, setUser }) {
     // Make API call to login user
     if (username && password) {
       const data = { username, password };
-      dispatch(loginUser(data))
+      dispatch(Services.loginUser(data))
         .then((response) => {
           console.log("Response:", response);
           // Check if login was successful

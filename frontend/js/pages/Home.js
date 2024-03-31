@@ -1,16 +1,23 @@
-import PropTypes from "prop-types";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { faEllipsisVertical } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import PropTypes from "prop-types";
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import "../../sass/style.scss";
 
-import Dropdown from "react-bootstrap/Dropdown";
-import "../constants/fontawesome";
+import { Dropdown, Tooltip, OverlayTrigger, Button } from "react-bootstrap";
+import Modal from "react-modal";
 
+import DownloadFileButton from "../components/downloadFileButton.js";
+import "../constants/fontawesome";
 import Loader from "../components/loader/Loader";
+import { Constants, customStyles } from "../constants";
 import { fetchRestCheck } from "../store/rest_check";
-import { uploadFile, encodeData, getFiles } from "../store/services";
+import { Services } from "../store/services";
+import { Avatar, Utils } from "../utils/utils.js";
+
+Modal.setAppElement(document.getElementById("home"));
 
 const Home = ({ isLoggedIn, user }) => {
   const dispatch = useDispatch();
@@ -24,20 +31,37 @@ const Home = ({ isLoggedIn, user }) => {
   const [length, setLength] = useState(1);
   const [mode, setMode] = useState("fixed");
   const [files, setFiles] = useState([]);
+  const [userFiles, setUserFiles] = useState([]);
+  const [modalIsOpen, setIsOpen] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState(null);
 
   const [showBugComponent, setShowBugComponent] = useState(false);
-
-  const [isOpen, setIsOpen] = useState(false);
-  const toggleDropdown = () => {
-    console.log("clicked!");
-    setIsOpen(!isOpen);
-  };
 
   useEffect(() => {
     const action = fetchRestCheck();
     loadFiles();
     dispatch(action);
-  }, [dispatch]);
+  }, [dispatch, setLoading]);
+
+  const Link = ({ id, children, title }) => (
+    <OverlayTrigger
+      overlay={
+        <Tooltip className="custom-tooltip" id={id}>
+          {title}
+        </Tooltip>
+      }
+    >
+      <a href="/#">{children}</a>
+    </OverlayTrigger>
+  );
+
+  function openModal() {
+    setIsOpen(true);
+  }
+
+  function closeModal() {
+    setIsOpen(false);
+  }
 
   function handlePlaintextFileChange(event) {
     setplaintextFile(event.target.files[0]);
@@ -48,10 +72,24 @@ const Home = ({ isLoggedIn, user }) => {
   }
 
   const loadFiles = () => {
-    dispatch(getFiles())
+    setLoading(true);
+    dispatch(Services.getFiles())
       .then((response) => {
         if (response.payload.status === 200) {
-          setFiles(response.payload.files);
+          const allFiles = response.payload.files;
+          const currentUserEmail = user.email; // Assuming user object is accessible here
+
+          // Filter files based on user's email
+          const userFiles = allFiles.filter(
+            (file) => file.user_email === currentUserEmail,
+          );
+          const otherUserFiles = allFiles.filter(
+            (file) => file.user_email !== currentUserEmail,
+          );
+
+          // Set the filtered files into state
+          setUserFiles(userFiles);
+          setFiles(otherUserFiles);
         }
         return 0;
       })
@@ -63,10 +101,81 @@ const Home = ({ isLoggedIn, user }) => {
       });
   };
 
+  const deleteRecord = () => {
+    if (selectedFileName !== null) {
+      console.log("selectedFileName", selectedFileName);
+      dispatch(Services.deleteRecord({ file_name: selectedFileName }))
+        .then((response) => {
+          if (response.payload.status === 200) {
+            setSelectedFileName(null);
+            loadFiles();
+          }
+          return 0;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  };
+
+  const deleteFile = (file_name) => {
+    dispatch(Services.deleteFile({ file_name }))
+      .then((response) => {
+        if (response.payload.status === 200) {
+          setSelectedFileName(null);
+          loadFiles();
+        }
+        return 0;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  const decodeFile = (record_id) => {
+    if (record_id !== null) {
+      dispatch(Services.decodeFile({ record_id }))
+        .then((response) => {
+          if (response.payload.status === 200) {
+            downloadFile(response.payload);
+            deleteFile(response.payload.file_name);
+          }
+          return 0;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  };
+
+  const downloadFile = (response) => {
+    const url = Constants.BASE_URL + response.file_path;
+    fetch(url)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // Create a temporary URL for the blob
+        const blobUrl = window.URL.createObjectURL(new Blob([blob]));
+        // Create a link element
+        const link = document.createElement("a");
+        // Set the link's href attribute to the temporary URL
+        link.href = blobUrl;
+        // Set the link's download attribute to the filename
+        link.download = response.file_name;
+        // Programmatically click the link to trigger the download
+        link.click();
+        // Clean up: revoke the temporary URL
+        window.URL.revokeObjectURL(blobUrl);
+        return 0;
+      })
+      .catch((error) => {
+        console.error("Error downloading file:", error);
+      });
+  };
+
   const handlePlainTextFileSubmit = (e) => {
     e.preventDefault();
     if (plainTextFile) {
-      dispatch(uploadFile(plainTextFile))
+      dispatch(Services.uploadFile(plainTextFile))
         .then((response) => {
           console.log("Response:", response);
           // Handle response data here
@@ -84,7 +193,7 @@ const Home = ({ isLoggedIn, user }) => {
   const handleMessageFileSubmit = (e) => {
     e.preventDefault();
     if (messageFile) {
-      dispatch(uploadFile(messageFile))
+      dispatch(Services.uploadFile(messageFile))
         .then((response) => {
           console.log("Response:", response);
           // Handle response data here
@@ -136,7 +245,7 @@ const Home = ({ isLoggedIn, user }) => {
       mode,
     };
 
-    dispatch(encodeData(requestBody))
+    dispatch(Services.encodeData(requestBody))
       .then((response) => {
         console.log("Response:", response);
         // Handle response data here
@@ -153,7 +262,43 @@ const Home = ({ isLoggedIn, user }) => {
     return <div>{loading && <Loader />}</div>;
   }
   return (
-    <div className="container mb-5 mt-6">
+    <div className="container mb-5 mt-6" id="home">
+      {modalIsOpen && (
+        <Modal
+          contentLabel="Example Modal"
+          isOpen={modalIsOpen}
+          style={customStyles}
+          onAfterClose={() => {
+            setSelectedFileName(null);
+            setIsOpen(false);
+          }}
+          onHide={() => {
+            setSelectedFileName(null);
+            setIsOpen(false);
+          }}
+          onRequestClose={closeModal}
+        >
+          <h2>Delete Confirmation</h2>
+          <br />
+          <p>Are you sure you want to delete this file?</p>
+          <br />
+          <div className="text-right">
+            <Button variant="secondary" onClick={closeModal}>
+              Cancel
+            </Button>
+            &ensp;&ensp;&ensp;&ensp;
+            <Button
+              variant="danger"
+              onClick={() => {
+                deleteRecord();
+                closeModal();
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </Modal>
+      )}
       <div className="col">
         <div className="row d-flex justify-content-center">
           <div className="card shadow-sm mt-5 p-4 w-50">
@@ -242,55 +387,149 @@ const Home = ({ isLoggedIn, user }) => {
           </div>
         </div>
 
-        <div className="row mt-5 row-cols-1 row-cols-md-4 g-4">
-          {files.map((file, index) => {
-            const fileName = file.encoded_file.file_name;
-            return (
-              <div key={file.id} className="col">
-                <div className="card h-100">
-                  <div className="card-header d-flex justify-content-between align-items-center">
-                    <span>
-                      <p className="card-text">
-                        {fileName.length > 16
-                          ? `${fileName.slice(0, 16)}...`
-                          : fileName}
-                      </p>
-                    </span>
+        {isLoggedIn && user ? (
+          <div>
+            <h2 className="mt-5">Your Uploads</h2>
+            {userFiles && userFiles.length !== 0 ? (
+              <div className="row mt-2 row-cols-1 row-cols-md-5 g-4">
+                {userFiles.map((file, index) => {
+                  const fileName = file.encoded_file.file_name;
+                  const date = Utils.formatDate(file.created);
+                  return (
+                    <div key={file.id} className="col">
+                      <div className="card h-100">
+                        <div className="card-header d-flex justify-content-between align-items-center">
+                          <span>
+                            <p className="card-text">
+                              {fileName.length > 16
+                                ? `${fileName.slice(0, 16)}...`
+                                : fileName}
+                            </p>
+                          </span>
 
-                    <Dropdown>
-                      <Dropdown.Toggle
-                        className="clear-dropdown-toggle"
-                        id="dropdown-basic"
-                        // variant="success"
-                      >
-                        <FontAwesomeIcon
-                          className="dropdown-icon"
-                          icon={faEllipsisVertical}
+                          <Dropdown>
+                            <Dropdown.Toggle
+                              className="clear-dropdown-toggle"
+                              id="dropdown-basic"
+                              // variant="success"
+                            >
+                              <FontAwesomeIcon
+                                className="dropdown-icon"
+                                icon={faEllipsisVertical}
+                              />
+                            </Dropdown.Toggle>
+
+                            <Dropdown.Menu>
+                              <Dropdown.Item
+                                onClick={() => {
+                                  setSelectedFileName(file.record_id);
+                                  decodeFile(file.record_id);
+                                }}
+                              >
+                                Decode
+                              </Dropdown.Item>
+                              <DownloadFileButton file={file.encoded_file} />
+                              <Dropdown.Divider />
+                              <Dropdown.Item
+                                onClick={() => {
+                                  setSelectedFileName(
+                                    file.encoded_file.file_name,
+                                  );
+                                  openModal();
+                                }}
+                              >
+                                Delete
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </div>
+                        <img
+                          alt="..."
+                          className="card-img-top"
+                          src={file.plaintext_file.file_path}
                         />
-                      </Dropdown.Toggle>
-
-                      <Dropdown.Menu>
-                        <Dropdown.Item href="#/action-1">Decode</Dropdown.Item>
-                        <Dropdown.Item href="#/action-2">
-                          Download
-                        </Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item href="#/action-3">Delete</Dropdown.Item>
-                      </Dropdown.Menu>
-                    </Dropdown>
-                  </div>
-                  <img
-                    alt="..."
-                    className="card-img-top"
-                    src={file.plaintext_file.file_path}
-                  />
-                  <div className="card-body">
-                    <p className="card-text">{fileName}</p>
-                  </div>
-                </div>
+                        <div className="card-body">
+                          {/* <p className="card-text">{fileName}</p> */}
+                          <div className="d-flex justify-content-between align-items-center">
+                            <Link href="/#" id="t-1" title={file.user_name}>
+                              <Avatar name={file.user_name} />
+                            </Link>
+                            <span>
+                              <p className="card-text">{date}</p>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            ) : (
+              <p> No files found!</p>
+            )}
+          </div>
+        ) : null}
+
+        <div>
+          <h2 className="mt-5">All Uploads</h2>
+          {files && files.length !== 0 ? (
+            <div className="row mt-5 row-cols-1 row-cols-md-4 g-4">
+              {files.map((file, index) => {
+                const fileName = file.encoded_file.file_name;
+                return (
+                  <div key={file.id} className="col">
+                    <div className="card h-100">
+                      <div className="card-header d-flex justify-content-between align-items-center">
+                        <span>
+                          <p className="card-text">
+                            {fileName.length > 16
+                              ? `${fileName.slice(0, 16)}...`
+                              : fileName}
+                          </p>
+                        </span>
+
+                        <Dropdown>
+                          <Dropdown.Toggle
+                            className="clear-dropdown-toggle"
+                            id="dropdown-basic"
+                            // variant="success"
+                          >
+                            <FontAwesomeIcon
+                              className="dropdown-icon"
+                              icon={faEllipsisVertical}
+                            />
+                          </Dropdown.Toggle>
+
+                          <Dropdown.Menu>
+                            <Dropdown.Item href="#/action-1">
+                              Decode
+                            </Dropdown.Item>
+                            <Dropdown.Item href="#/action-2">
+                              Download
+                            </Dropdown.Item>
+                            <Dropdown.Divider />
+                            <Dropdown.Item href="#/action-3">
+                              Delete
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </div>
+                      <img
+                        alt="..."
+                        className="card-img-top"
+                        src={file.plaintext_file.file_path}
+                      />
+                      <div className="card-body">
+                        <p className="card-text">{fileName}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p> No files found!</p>
+          )}
         </div>
       </div>
     </div>

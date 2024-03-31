@@ -204,9 +204,9 @@ def encode_message_simple(plaintext_file_path, message_file_path, skip_bits, len
     return File(content_file)
 
 
-def decode_message_simple(encoded_file_name):
+def decode_message_simple(encoded_file_path):
     # Read content of encoded file
-    encoded_content = read_file(get_file_path(encoded_file_name))
+    encoded_content = read_file(encoded_file_path)
 
     # Convert content to binary string
     encoded_binary = ''.join(format(byte, '08b') for byte in encoded_content)
@@ -225,14 +225,15 @@ def decode_message_simple(encoded_file_name):
         message_binary += encoded_binary[i]
 
     # Convert binary string back to bytes
-    message_content = bytes([int(message_binary[i:i + 8], 2) for i in range(0, len(message_binary), 8)])
+    file_bytes = bytes([int(message_binary[i:i + 8], 2) for i in range(0, len(message_binary), 8)])
 
     # Save decoded message to file
+    encoded_file_name = os.path.basename(encoded_file_path)
     message_file_name = os.path.splitext(encoded_file_name)[0] + '_decoded' + \
                         os.path.splitext(encoded_file_name)[1]
-    write_file(message_file_name, message_content)
+    content_file = ContentFile(file_bytes, name=message_file_name)
 
-    return message_file_name
+    return File(content_file)
 
 
 def createRecord(current_user, plaintext_file, message_file, encoded_file, skip_bits, length, mode):

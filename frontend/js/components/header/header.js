@@ -5,7 +5,7 @@ import "../../../sass/style.scss";
 
 import { useDispatch, useSelector } from "react-redux";
 import { setIsLogged } from "../../store/actions/actions";
-import { getUserDetails, logoutUser } from "../../store/services";
+import { Services } from "../../store/services";
 
 function Header(props) {
   const dispatch = useDispatch();
@@ -17,7 +17,7 @@ function Header(props) {
   };
 
   const handleLogout = async () => {
-    await dispatch(logoutUser())
+    await dispatch(Services.logoutUser())
       .then((response) => {
         console.log("Response:", response);
         // Check if logout was successful

@@ -10,7 +10,7 @@ import configureStore from "./store";
 
 const store = configureStore({});
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("user"));
   const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
 
   return (

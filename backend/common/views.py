@@ -16,7 +16,7 @@ from rest_framework.response import Response
 
 from common.models import UploadedFile, SteganographyRecord
 from common.utils.utils import check_file_lengths_valid, encode_message, get_file_path, \
-    encode_message_simple, get_magic_number, file_to_bitarray, createRecord, get_file_from_path
+    encode_message_simple, get_magic_number, file_to_bitarray, createRecord, get_file_from_path, decode_message_simple
 
 
 class IndexView(generic.TemplateView):
@@ -80,7 +80,7 @@ class RestViewSet(viewsets.ViewSet):
         detail=False,
         methods=["get"],
         permission_classes=[AllowAny],
-        url_path="logged-in-user-details",
+        url_path="user/logged-in-user-details",
     )
     def get_logged_in_user_details(self, request):
         if request.user.is_anonymous:
@@ -98,7 +98,7 @@ class RestViewSet(viewsets.ViewSet):
         detail=False,
         methods=["post"],
         permission_classes=[AllowAny],
-        url_path="upload",
+        url_path="file/upload",
     )
     def upload_file(self, request):
         file_obj = request.FILES.get('file')
@@ -117,14 +117,15 @@ class RestViewSet(viewsets.ViewSet):
         file_length = len(file_to_bitarray(saved_file.path))
         magic_number = get_magic_number(saved_file.path)
 
-        return Response({"file_name": file_name, "file_id": my_file.id, "bitarray_length": file_length, "magic_number": magic_number},
+        return Response({"file_name": file_name, "file_id": my_file.id, "bitarray_length": file_length,
+                         "magic_number": magic_number},
                         status=status.HTTP_200_OK)
 
     @action(
         detail=False,
         methods=["post"],
         permission_classes=[AllowAny],
-        url_path="encode",
+        url_path="file/encode",
     )
     def encode_file(self, request):
         # Extract parameters from the request
@@ -137,7 +138,6 @@ class RestViewSet(viewsets.ViewSet):
         # Check if all required parameters are provided
         if not all([plaintext_file_id, message_file_id, starting_bit, length, mode]):
             return Response({"error": "All parameters are required"}, status=status.HTTP_400_BAD_REQUEST)
-
 
         # Fetch file from db:
         plaintext_file = UploadedFile.objects.get(pk=plaintext_file_id).file
@@ -185,17 +185,21 @@ class RestViewSet(viewsets.ViewSet):
         detail=False,
         methods=["post"],
         permission_classes=[AllowAny],
-        url_path="get-files",
+        url_path="file/get-files",
     )
     def get_files(self, request):
         files: Iterable[SteganographyRecord] = SteganographyRecord.objects.all()
 
         files_list = []
         for file in files:
-            data = {'user_id': file.user.id, 'skip_bits': file.skip_bits, 'length': file.length, 'mode': file.mode, 'created': file.created}
-            plaintext_data = {'file_name': os.path.basename(file.plaintext_file.name), 'file_path': os.path.relpath(file.plaintext_file.path)}
-            message_data = {'file_name': os.path.basename(file.message_file.name), 'file_path': os.path.relpath(file.message_file.path)}
-            encoded_data = {'file_name': os.path.basename(file.encoded_file.name), 'file_path': os.path.relpath(file.encoded_file.path)}
+            data = {'record_id': file.pk, 'user_email': file.user.email, 'user_name': file.user.get_full_name(), 'created_on': file.created,
+                    'skip_bits': file.skip_bits, 'length': file.length, 'mode': file.mode, 'created': file.created}
+            plaintext_data = {'file_name': os.path.basename(file.plaintext_file.name),
+                              'file_path': os.path.relpath(file.plaintext_file.path)}
+            message_data = {'file_name': os.path.basename(file.message_file.name),
+                            'file_path': os.path.relpath(file.message_file.path)}
+            encoded_data = {'file_name': os.path.basename(file.encoded_file.name),
+                            'file_path': os.path.relpath(file.encoded_file.path)}
 
             data['plaintext_file'] = plaintext_data
             data['message_file'] = message_data
@@ -204,3 +208,85 @@ class RestViewSet(viewsets.ViewSet):
             files_list.append(data)
 
         return JsonResponse({"status": 200, "files": files_list}, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="record/delete-record",
+    )
+    def delete_file(self, request):
+        encoded_file_name = request.data.get('file_name')
+        try:
+            first_record = SteganographyRecord.objects.filter(encoded_file__contains=encoded_file_name).first()
+
+            # Delete record
+            plaintext_file_name = os.path.basename(first_record.plaintext_file.path)
+            message_file_name = os.path.basename(first_record.message_file.path)
+            first_record.delete()
+
+            # Delete Plaintext file
+            plaintext_file = UploadedFile.objects.filter(file__contains=plaintext_file_name).first()
+            plaintext_file.delete()
+
+            # Delete message file
+            message_file = UploadedFile.objects.filter(file__contains=message_file_name).first()
+            message_file.delete()
+
+            return Response({"status": 200, "message": "File deleted successfully!"},
+                            status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"status": 404, "message": "Unable to delete file!"},
+                            status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="file/delete",
+    )
+    def delete_file(self, request):
+        encoded_file_name = request.data.get('file_name')
+        try:
+            first_record = UploadedFile.objects.filter(file__contains=encoded_file_name).first()
+
+            # Delete record
+            first_record.delete()
+
+            return Response({"status": 200, "message": "File deleted successfully!"},
+                            status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"status": 404, "message": "Unable to delete file!"},
+                            status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="file/decode",
+    )
+    def decode_file(self, request):
+        record_id = request.data.get('record_id')
+        try:
+            first_record = SteganographyRecord.objects.get(id=record_id)
+
+            # Decode File
+            decoded_file = decode_message_simple(first_record.encoded_file.path)
+
+            # Save to UploadFile DB
+            my_file = UploadedFile(file=decoded_file)
+            my_file.save()
+
+            # Get File name and path
+            saved_file = my_file.file
+            file_name = os.path.basename(saved_file.path)
+
+            return Response({"status": 200, "file_name": file_name, "file_path": os.path.relpath(saved_file.path)},
+                            status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"Error occured: {e}")
+            return Response({"status": 404, "message": "Unable to decode file!"},
+                            status=status.HTTP_200_OK)

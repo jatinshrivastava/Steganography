@@ -37,6 +37,7 @@ fi
 
 if [[ $CREATE_SUPERUSER ]];
 then
+    echo "-----> Creating superuser"
   python backend/manage.py createsuperuser --no-input
 fi
 

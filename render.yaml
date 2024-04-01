@@ -111,7 +111,7 @@ envVarGroups:
           - key: POETRY_VERSION
             value: 1.7.1
           - key: SECRET_KEY
-            value: gw^9ej(l4vq%d_06xig$vw+b(-@#00@8l7jlv77=sq5r_sf3nu
+            generateValue: true
           - key: DJANGO_SETTINGS_MODULE
             value: steganography.settings.production
           - key: ALLOWED_HOSTS

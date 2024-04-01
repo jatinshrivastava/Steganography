@@ -9,6 +9,7 @@ DEBUG = False
 
 SECRET_KEY = config("SECRET_KEY")
 
+
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", cast=Csv())

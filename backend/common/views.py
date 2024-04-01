@@ -16,7 +16,7 @@ from rest_framework.response import Response
 
 from common.models import UploadedFile, SteganographyRecord
 from common.utils.utils import check_file_lengths_valid, encode_message, get_file_path, \
-    encode_message_simple, get_magic_number, file_to_bitarray, createRecord, get_file_from_path, decode_message_simple
+    encode_message_simple, get_magic_number, createRecord, get_file_from_path, decode_message_simple
 
 
 class IndexView(generic.TemplateView):

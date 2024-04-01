@@ -1,6 +1,6 @@
 import os
 
-import bitarray
+# import bitarray
 # import bitarray
 # import puremagic
 from django.conf import settings
@@ -10,12 +10,12 @@ from django.core.files.base import ContentFile, File
 from common.models import SteganographyRecord
 
 
-def file_to_bitarray(file_path):
-    with open(file_path, 'rb') as f:
-        data = f.read()
-    bit_array = bitarray.bitarray()
-    bit_array.frombytes(data)
-    return bit_array
+# def file_to_bitarray(file_path):
+#     with open(file_path, 'rb') as f:
+#         data = f.read()
+#     bit_array = bitarray.bitarray()
+#     bit_array.frombytes(data)
+#     return bit_array
 
 
 def get_file_path(file_name):

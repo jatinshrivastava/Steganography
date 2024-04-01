@@ -4,12 +4,13 @@ import "./header.scss";
 import "../../../sass/style.scss";
 
 import { useDispatch, useSelector } from "react-redux";
+
 import { setIsLogged } from "../../store/actions/actions";
 import { Services } from "../../store/services";
 
 function Header(props) {
   const dispatch = useDispatch();
-  let [showSubMenu, setShowSubMenu] = useState(false);
+  const [showSubMenu, setShowSubMenu] = useState(false);
   const { isLoggedIn, setIsLoggedIn, user } = props;
 
   const openSubMenu = () => {

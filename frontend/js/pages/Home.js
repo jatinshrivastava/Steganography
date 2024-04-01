@@ -236,6 +236,29 @@ const Home = ({ isLoggedIn, user }) => {
     }
   };
 
+  const handleCancelEncodeSubmit = (e) => {
+    e.preventDefault();
+    const plaintext_filename = plaintextData.file_name;
+    const message_filename = messageData.file_name;
+    // Call two APIs simultaneously
+    Promise.all([
+      dispatch(Services.deleteFile({ file_name: plaintext_filename })),
+      dispatch(Services.deleteFile({ file_name: message_filename })),
+    ])
+      .then(([response1, response2]) => {
+        console.log("Response1:", response1);
+        console.log("Response2:", response2);
+        // Handle response data here
+        // Reset form or perform any other action after successful encoding
+        window.location.reload();
+        return 0;
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        // Handle error here
+      });
+  };
+
   const handleEncodeSubmit = (e) => {
     e.preventDefault();
     // Assuming you have the required parameters stored in state variables
@@ -252,6 +275,7 @@ const Home = ({ isLoggedIn, user }) => {
         console.log("Response:", response);
         // Handle response data here
         // Reset form or perform any other action after successful encoding
+        window.location.reload();
         return 0;
       })
       .catch((error) => {
@@ -312,7 +336,12 @@ const Home = ({ isLoggedIn, user }) => {
                   <form onSubmit={handlePlainTextFileSubmit}>
                     <h3>Upload Plaintext File</h3>
                     <input type="file" onChange={handlePlaintextFileChange} />
-                    <button type="submit">Upload</button>
+                    <button
+                      className="btn bg-color-dark-purple text-white"
+                      type="submit"
+                    >
+                      Upload
+                    </button>
                   </form>
                 )}
                 {messageData && messageData.file_name ? (
@@ -321,7 +350,12 @@ const Home = ({ isLoggedIn, user }) => {
                   <form onSubmit={handleMessageFileSubmit}>
                     <h3>Upload Message File</h3>
                     <input type="file" onChange={handleMessageFileChange} />
-                    <button type="submit">Upload</button>
+                    <button
+                      className="btn bg-color-dark-purple text-white"
+                      type="submit"
+                    >
+                      Upload
+                    </button>
                   </form>
                 )}
 
@@ -377,13 +411,25 @@ const Home = ({ isLoggedIn, user }) => {
                         messageData.bitarray_length,
                       )}
                     </p>
-                    <button
-                      className="btn bg-color-dark-purple text-white"
-                      type="button"
-                      onClick={handleEncodeSubmit}
-                    >
-                      Encode
-                    </button>
+                    <div className="row">
+                      <div className="col w-50" />
+                      <div className="col w-50 d-flex justify-content-between gap-3">
+                        <button
+                          className="btn col btn-danger"
+                          type="button"
+                          onClick={handleCancelEncodeSubmit}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="btn col bg-color-dark-purple text-white"
+                          type="button"
+                          onClick={handleEncodeSubmit}
+                        >
+                          Encode
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div />
@@ -474,7 +520,7 @@ const Home = ({ isLoggedIn, user }) => {
         <div>
           <h2 className="mt-5">All Uploads</h2>
           {files && files.length !== 0 ? (
-            <div className="row mt-5 row-cols-1 row-cols-md-4 g-4" key="12">
+            <div className="row mt-5 row-cols-1 row-cols-md-4 g-4">
               {files.map((file, index) => {
                 const fileName = file.encoded_file.file_name;
                 const date = Utils.formatDate(file.created);

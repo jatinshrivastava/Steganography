@@ -48,40 +48,53 @@ function Login({ setIsLoggedIn, setUser }) {
   };
 
   return (
-    <div className="container">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <div className="form-group">
-          <label htmlFor="username">
-            Username
-            <input
-              className="form-control"
-              id="username"
-              required
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </label>
+    <div className="container mb-5 mt-6">
+      <div className="col">
+        <div className="row d-flex justify-content-center">
+          <div className="card shadow-sm mt-5 p-4 w-50">
+            <div className="text-center">
+              <span>
+                <h2>Login</h2>
+              </span>
+              <form onSubmit={handleLogin}>
+                <div className="form-group">
+                  <label htmlFor="username">
+                    Email
+                    <input
+                      className="form-control"
+                      id="username"
+                      required
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                    />
+                  </label>
+                </div>
+                <div className="form-group mt-3">
+                  <label htmlFor="password">
+                    Password
+                    <input
+                      className="form-control"
+                      id="password"
+                      required
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </label>
+                </div>
+                {error && <div className="alert alert-danger">{error}</div>}
+                <button
+                  className="btn bg-color-dark-purple text-white mt-3 w-25"
+                  type="submit"
+                >
+                  Login
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
-        <div className="form-group">
-          <label htmlFor="password">
-            Password
-            <input
-              className="form-control"
-              id="password"
-              required
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
-        </div>
-        {error && <div className="alert alert-danger">{error}</div>}
-        <button className="btn btn-primary" type="submit">
-          Login
-        </button>
-      </form>
+      </div>
     </div>
   );
 }

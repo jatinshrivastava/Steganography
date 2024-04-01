@@ -1,21 +1,21 @@
 import os
 
-# import bitarray
-# import bitarray
 # import puremagic
 from django.conf import settings
-from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile, File
+from django.core.files.storage import default_storage
+
+import bitarray
 
 from common.models import SteganographyRecord
 
 
-# def file_to_bitarray(file_path):
-#     with open(file_path, 'rb') as f:
-#         data = f.read()
-#     bit_array = bitarray.bitarray()
-#     bit_array.frombytes(data)
-#     return bit_array
+def file_to_bitarray(file_path):
+    with open(file_path, "rb") as f:
+        data = f.read()
+    bit_array = bitarray.bitarray()
+    bit_array.frombytes(data)
+    return bit_array
 
 
 def get_file_path(file_name):
@@ -41,21 +41,21 @@ def check_file_lengths_valid(plaintext_path, message_path):
 
 
 def read_file(file_path):
-    with open(file_path, 'rb') as file:
+    with open(file_path, "rb") as file:
         content = file.read()
     return content
 
 
 def get_file_from_path(file_path):
-    return File(open(file_path, 'rb'))
+    return File(open(file_path, "rb"))
 
 
 def write_file(file_name, content):
     # Save content using Django's default_storage
     file_name = default_storage.save(file_name, ContentFile(content))
-    print(f'File name is: {file_name}')
+    print(f"File name is: {file_name}")
     path = os.path.relpath(os.path.join(settings.MEDIA_ROOT, file_name))
-    print(f'path is : {path}')
+    print(f"path is : {path}")
     # Return the full file path
     return get_file_from_path(path)
 
@@ -65,7 +65,7 @@ def get_message_length(message_file_name):
     message_content = read_file(get_file_path(message_file_name))
 
     # Convert content to binary string
-    message_binary = ''.join(format(byte, '08b') for byte in message_content)
+    message_binary = "".join(format(byte, "08b") for byte in message_content)
 
     # Return length of binary string
     return len(message_binary)
@@ -78,13 +78,13 @@ def get_magic_number(file_name):
 
 
 def get_header_size(mime_type):
-    if mime_type == 'image/jpeg':
+    if mime_type == "image/jpeg":
         return 20  # JPEG files have a 20 byte header
-    elif mime_type == 'video/quicktime':
+    elif mime_type == "video/quicktime":
         return 8  # QuickTime files have an 8 byte header
-    elif mime_type == 'video/mp4':
+    elif mime_type == "video/mp4":
         return 8  # MP4 files also have an 8 byte header
-    elif mime_type == 'text/plain':
+    elif mime_type == "text/plain":
         return 0  # Plain text files don't have a header
     else:
         return None  # Return None for unknown MIME types
@@ -96,11 +96,11 @@ def encode_message(plaintext_file_name, message_file_name, starting_bit, length,
     message_content = read_file(get_file_path(message_file_name))
 
     # Convert content to binary strings
-    plaintext_binary = ''.join(format(byte, '08b') for byte in plaintext_content)
-    message_binary = ''.join(format(byte, '08b') for byte in message_content)
+    plaintext_binary = "".join(format(byte, "08b") for byte in plaintext_content)
+    message_binary = "".join(format(byte, "08b") for byte in message_content)
 
     # Define initial length (L) and increment value based on mode (C)
-    if mode == 'enhanced':
+    if mode == "enhanced":
         length_increment = 8
     else:
         length_increment = 0  # Default mode without length adjustment
@@ -109,21 +109,28 @@ def encode_message(plaintext_file_name, message_file_name, starting_bit, length,
     for i in range(starting_bit, len(plaintext_binary), length):
         if i + len(message_binary) > len(plaintext_binary):
             break
-        plaintext_binary = plaintext_binary[:i] + message_binary[:length] + plaintext_binary[i + length:]
+        plaintext_binary = (
+            plaintext_binary[:i] + message_binary[:length] + plaintext_binary[i + length :]
+        )
         # Increment length according to mode (C)
         length += length_increment
         if length > 8:
             length = 8  # Reset length to 8 if it exceeds maximum value (for cyclic adjustment)
 
     # Add the starting bit and length to the beginning of the binary string
-    plaintext_binary = format(starting_bit, '016b') + format(length, '016b') + plaintext_binary
+    plaintext_binary = format(starting_bit, "016b") + format(length, "016b") + plaintext_binary
 
     # Convert binary string back to bytes
-    modified_plaintext_content = bytes([int(plaintext_binary[i:i + 8], 2) for i in range(0, len(plaintext_binary), 8)])
+    modified_plaintext_content = bytes(
+        [int(plaintext_binary[i : i + 8], 2) for i in range(0, len(plaintext_binary), 8)]
+    )
 
     # Save modified plaintext file
-    modified_plaintext_file_name = os.path.splitext(plaintext_file_name)[0] + '_encoded' + \
-                                   os.path.splitext(plaintext_file_name)[1]
+    modified_plaintext_file_name = (
+        os.path.splitext(plaintext_file_name)[0]
+        + "_encoded"
+        + os.path.splitext(plaintext_file_name)[1]
+    )
     write_file(modified_plaintext_file_name, modified_plaintext_content)
 
     # Check if encoding was successful
@@ -144,23 +151,26 @@ def decode_message(encoded_file_name):
     encoded_content = read_file(get_file_path(encoded_file_name))
 
     # Convert content to binary string
-    encoded_binary = ''.join(format(byte, '08b') for byte in encoded_content)
+    encoded_binary = "".join(format(byte, "08b") for byte in encoded_content)
 
     # Extract starting bit and length from the beginning of the binary string
     starting_bit = int(encoded_binary[:16], 2)
     length = int(encoded_binary[16:32], 2)
 
     # Extract message from encoded binary string
-    message_binary = ''
+    message_binary = ""
     for i in range(32 + starting_bit, len(encoded_binary), length):
-        message_binary += encoded_binary[i:i + length]
+        message_binary += encoded_binary[i : i + length]
 
     # Convert binary string back to bytes
-    message_content = bytes([int(message_binary[i:i + 8], 2) for i in range(0, len(message_binary), 8)])
+    message_content = bytes(
+        [int(message_binary[i : i + 8], 2) for i in range(0, len(message_binary), 8)]
+    )
 
     # Save decoded message to file
-    message_file_name = os.path.splitext(encoded_file_name)[0] + '_decoded' + \
-                        os.path.splitext(encoded_file_name)[1]
+    message_file_name = (
+        os.path.splitext(encoded_file_name)[0] + "_decoded" + os.path.splitext(encoded_file_name)[1]
+    )
     write_file(message_file_name, message_content)
 
     # Check if decoding was successful
@@ -176,28 +186,37 @@ def encode_message_simple(plaintext_file_path, message_file_path, skip_bits, len
     message_content = read_file(message_file_path)
 
     # Convert content to binary strings
-    plaintext_binary = ''.join(format(byte, '08b') for byte in plaintext_content)
-    message_binary = ''.join(format(byte, '08b') for byte in message_content)
+    plaintext_binary = "".join(format(byte, "08b") for byte in plaintext_content)
+    message_binary = "".join(format(byte, "08b") for byte in message_content)
 
     # Embed message into plaintext at specified position with dynamic length adjustment
     j = 0
     for i in range(skip_bits, len(plaintext_binary), length):
         if j >= len(message_binary):
             break
-        plaintext_binary = plaintext_binary[:i] + message_binary[j] + plaintext_binary[i + 1:]
+        plaintext_binary = plaintext_binary[:i] + message_binary[j] + plaintext_binary[i + 1 :]
         j += 1
 
     # Store the skip_bits, length and original_message_length in the last 48 bits
-    encoded_binary = plaintext_binary + format(skip_bits, '016b') + format(length, '016b') + format(len(message_binary),
-                                                                                                    '016b')
+    encoded_binary = (
+        plaintext_binary
+        + format(skip_bits, "016b")
+        + format(length, "016b")
+        + format(len(message_binary), "016b")
+    )
 
     # Convert binary string back to bytes
-    file_bytes = bytes([int(encoded_binary[i:i + 8], 2) for i in range(0, len(encoded_binary), 8)])
+    file_bytes = bytes(
+        [int(encoded_binary[i : i + 8], 2) for i in range(0, len(encoded_binary), 8)]
+    )
 
     # Save encoded file
     plaintext_file_name = os.path.basename(plaintext_file_path)
-    encoded_file_name = os.path.splitext(plaintext_file_name)[0] + '_encoded' + \
-                        os.path.splitext(plaintext_file_name)[1]
+    encoded_file_name = (
+        os.path.splitext(plaintext_file_name)[0]
+        + "_encoded"
+        + os.path.splitext(plaintext_file_name)[1]
+    )
     # encoded_file = write_file(encoded_file_name, encoded_content)
 
     content_file = ContentFile(file_bytes, name=encoded_file_name)
@@ -209,7 +228,7 @@ def decode_message_simple(encoded_file_path):
     encoded_content = read_file(encoded_file_path)
 
     # Convert content to binary string
-    encoded_binary = ''.join(format(byte, '08b') for byte in encoded_content)
+    encoded_binary = "".join(format(byte, "08b") for byte in encoded_content)
 
     # Extract the skip_bits, length and original_message_length from the last 48 bits
     skip_bits = int(encoded_binary[-48:-32], 2)
@@ -217,7 +236,7 @@ def decode_message_simple(encoded_file_path):
     original_message_length = int(encoded_binary[-16:], 2)
 
     # Extract the message from the encoded binary string
-    message_binary = ''
+    message_binary = ""
     for i in range(skip_bits, skip_bits + original_message_length * length, length):
         # Check if index is out of range
         if i >= len(encoded_binary) - 48:
@@ -225,18 +244,23 @@ def decode_message_simple(encoded_file_path):
         message_binary += encoded_binary[i]
 
     # Convert binary string back to bytes
-    file_bytes = bytes([int(message_binary[i:i + 8], 2) for i in range(0, len(message_binary), 8)])
+    file_bytes = bytes(
+        [int(message_binary[i : i + 8], 2) for i in range(0, len(message_binary), 8)]
+    )
 
     # Save decoded message to file
     encoded_file_name = os.path.basename(encoded_file_path)
-    message_file_name = os.path.splitext(encoded_file_name)[0] + '_decoded' + \
-                        os.path.splitext(encoded_file_name)[1]
+    message_file_name = (
+        os.path.splitext(encoded_file_name)[0] + "_decoded" + os.path.splitext(encoded_file_name)[1]
+    )
     content_file = ContentFile(file_bytes, name=message_file_name)
 
     return File(content_file)
 
 
-def createRecord(current_user, plaintext_file, message_file, encoded_file, skip_bits, length, mode):
+def create_record(
+    current_user, plaintext_file, message_file, encoded_file, skip_bits, length, mode
+):
     # Create a new SteganographyRecord instance
     record = SteganographyRecord(
         user=current_user,
@@ -245,9 +269,10 @@ def createRecord(current_user, plaintext_file, message_file, encoded_file, skip_
         encoded_file=encoded_file,
         skip_bits=skip_bits,
         length=length,
-        mode=mode
+        mode=mode,
     )
     return record.save()
+
 
 # def encode_message_optimized(plaintext_file_name, message_file_name, starting_bit, length, mode):
 #     # Read content of plaintext and message files

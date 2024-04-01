@@ -78,7 +78,7 @@ function Header(props) {
             </nav>
           ) : (
             // If user is not logged in
-            <a className="btn btn-primary" href="/login">
+            <a className="btn bg-color-canilla" href="/login">
               Login
             </a>
           )}

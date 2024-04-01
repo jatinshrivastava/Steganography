@@ -35,4 +35,9 @@ if [ -n "$SENTRY_API_KEY" ] && [ -n "$SENTRY_ORG" ] && [ -n "$SENTRY_PROJECT_NAM
     rm ./frontend/webpack_bundles/*.js.map
 fi
 
+if [[ $CREATE_SUPERUSER ]];
+then
+  python backend/manage.py createsuperuser --no-input
+fi
+
 echo "-----> Post-compile done"

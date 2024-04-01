@@ -7,7 +7,7 @@ from .base import *
 
 DEBUG = False
 
-SECRET_KEY = "gw^9ej(l4vq%d_06xig$vw+b(-@#00@8l7jlv77=sq5r_sf3nu"
+SECRET_KEY = config("SECRET_KEY")
 
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 

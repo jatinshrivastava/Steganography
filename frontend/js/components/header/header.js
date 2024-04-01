@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import "./header.scss";
 import "../../../sass/style.scss";
 
@@ -12,6 +13,13 @@ function Header(props) {
   const dispatch = useDispatch();
   const [showSubMenu, setShowSubMenu] = useState(false);
   const { isLoggedIn, setIsLoggedIn, user } = props;
+  const [activeLink, setActiveLink] = useState("Steganography");
+  const location = useLocation();
+
+  useEffect(() => {
+    // Set the active link state to the current pathname
+    setActiveLink(location.pathname);
+  }, [location]);
 
   const openSubMenu = () => {
     setShowSubMenu(!showSubMenu);
@@ -46,10 +54,26 @@ function Header(props) {
       <div className="navbar sticky-top bg-color-dark-purple">
         <div className="container-fluid">
           <a className="navbar-brand text-white" href="/#">
-            Steganography App
+            Info Sec II by Jatin Shrivastava
           </a>
-          {isLoggedIn && user && user.first_name ? ( // Check if user is logged in
-            <nav>
+          <nav className="d-flex gap-4">
+            <div className="pe-4 row d-flex gap-4">
+              <a
+                className={`nav-link col ${activeLink === "/" ? "active" : ""}`}
+                href="/"
+              >
+                <span className="align-middle">Steganography</span>
+              </a>
+              <a
+                className={`nav-link col ${
+                  activeLink === "/cryptography" ? "active" : ""
+                }`}
+                href="/cryptography"
+              >
+                <span className="align-middle">Cryptography</span>
+              </a>
+            </div>
+            {isLoggedIn && user && user.first_name ? ( // Check if user is logged in
               <li>
                 <div
                   className="profile-btn"
@@ -76,13 +100,13 @@ function Header(props) {
                   </ul>
                 </div>
               </li>
-            </nav>
-          ) : (
-            // If user is not logged in
-            <a className="btn bg-color-canilla" href="/login">
-              Login
-            </a>
-          )}
+            ) : (
+              // If user is not logged in
+              <a className="btn bg-color-canilla" href="/login">
+                Login
+              </a>
+            )}
+          </nav>
         </div>
       </div>
     </header>

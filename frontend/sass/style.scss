@@ -126,3 +126,15 @@
 a {
   text-decoration: none;
 }
+
+.nav-link, .nav-link:hover {
+  color: white;
+  padding: 4px 4px;
+}
+
+.nav-link.active{
+  background-color: #A9E5BB;
+  border-radius: 8px;
+  color: black;
+
+}

@@ -74,7 +74,7 @@ function Header(props) {
               </a>
             </div>
             {isLoggedIn && user && user.first_name ? ( // Check if user is logged in
-              <li>
+              <li className="d-flex mt-1">
                 <div
                   className="profile-btn"
                   role="button"
@@ -85,7 +85,9 @@ function Header(props) {
                   onMouseLeave={() => setShowSubMenu(false)}
                 >
                   <a className="text-white profile_icon" href="/#">
-                    Hello, {user.first_name}
+                    <span className="align-middle">
+                      Hello, {user.first_name}
+                    </span>
                   </a>
                   <ul className={`nav__submenu ${showSubMenu ? "show" : ""}`}>
                     <li>

@@ -73,7 +73,7 @@ const Home = ({ isLoggedIn, user }) => {
 
   const loadFiles = () => {
     setLoading(true);
-    dispatch(Services.getFiles())
+    dispatch(Services.getRecords())
       .then((response) => {
         if (response.payload.status === 200) {
           const allFiles = response.payload.files;

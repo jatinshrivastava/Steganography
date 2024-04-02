@@ -45,9 +45,31 @@ export const Services = {
     return res.data;
   }),
 
-  // Get Fukes
+  // Get records
+  getRecords: createAsyncThunk("records/get", async () => {
+    const res = await api.post("/api/rest/file/get-records/");
+    return res.data;
+  }),
+
+  // Get Files
   getFiles: createAsyncThunk("files/get", async () => {
     const res = await api.post("/api/rest/file/get-files/");
+    return res.data;
+  }),
+
+  // Get User Hashes
+  getUserHashes: createAsyncThunk("userHashes/get", async () => {
+    const res = await api.post("/api/rest/crypto/get-user-hashes/");
+    return res.data;
+  }),
+
+  // Get Files
+  hashFile: createAsyncThunk("files/hash", async ({ file_id }) => {
+    // Construct the request body
+    const requestBody = {
+      file_id,
+    };
+    const res = await api.post("/api/rest/crypto/hash-file/", requestBody);
     return res.data;
   }),
 
@@ -125,6 +147,70 @@ export const Services = {
     // Return the response data
     return res.data;
   }),
+
+  // Generate Key(s)
+  generateKey: createAsyncThunk("crypto/generateKey", async ({ name }) => {
+    // Construct the request body
+    const requestBody = {
+      name,
+    };
+
+    // Make the API call
+    const res = await api.post("/api/rest/crypto/generateKey/", requestBody);
+
+    // Return the response data
+    return res.data;
+  }),
+
+  // Get User Key(s)
+  getUserKeys: createAsyncThunk("crypto/getUserKeys", async ({ user_id }) => {
+    // Construct the request body
+    const requestBody = {
+      user_id,
+    };
+
+    // Make the API call
+    const res = await api.post("/api/rest/crypto/getUserKeys/", requestBody);
+
+    // Return the response data
+    return res.data;
+  }),
+
+  // Encrypt File
+  encryptFile: createAsyncThunk(
+    "crypto/encrypt-file",
+    async ({ file_id, key_id }) => {
+      // Construct the request body
+      const requestBody = {
+        file_id,
+        key_id,
+      };
+
+      // Make the API call
+      const res = await api.post("/api/rest/crypto/encrypt-file/", requestBody);
+
+      // Return the response data
+      return res.data;
+    },
+  ),
+
+  // Decrypt File
+  decryptFile: createAsyncThunk(
+    "crypto/decrypt-file",
+    async ({ file_id, key_id }) => {
+      // Construct the request body
+      const requestBody = {
+        file_id,
+        key_id,
+      };
+
+      // Make the API call
+      const res = await api.post("/api/rest/crypto/decrypt-file/", requestBody);
+
+      // Return the response data
+      return res.data;
+    },
+  ),
 
   // Reducer
   fileUploadReducer: createSlice(

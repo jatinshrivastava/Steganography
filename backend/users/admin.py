@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from common.models import UploadedFile, SteganographyRecord
+from common.models import UploadedFile, SteganographyRecord, CryptographicKey, FileHash
 from .forms import CustomUserCreationForm
 from .models import User
 
@@ -38,4 +38,16 @@ class UploadedFileAdmin(admin.ModelAdmin):
 @admin.register(SteganographyRecord)
 class SteganographyRecordAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'plaintext_file', 'message_file', 'encoded_file', 'skip_bits', 'length', 'mode', 'created', 'modified']
+    pass
+
+
+@admin.register(CryptographicKey)
+class CryptographicKeyAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'name', 'key', 'created', 'modified']
+    pass
+
+
+@admin.register(FileHash)
+class FileHashAdmin(admin.ModelAdmin):
+    list_display = ['id', 'file', 'hash', 'created', 'modified']
     pass

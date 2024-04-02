@@ -31,7 +31,7 @@
 }
 
 .mt-6 {
-  margin-top: 6rem !important;
+  margin-top: 4.25rem !important;
 }
 
 .mt-7 {
@@ -56,6 +56,10 @@
 
 .color-xanthous {
   color: #F7B32B;
+}
+
+.bg-color-xanthous {
+  background-color: #F7B32B;
 }
 
 .color-canilla {
@@ -137,4 +141,124 @@ a {
   border-radius: 8px;
   color: black;
 
+}
+
+.clear-button {
+  border: none; /* Remove the border */
+  outline: none;
+}
+
+.list-group {
+  list-style-type: none;
+}
+
+.list-group li {
+  margin-bottom: 1rem;
+
+}
+
+.sidebar {
+  position: fixed;
+  height: 100vh;
+  padding: 20px;
+  margin-left: -6rem !important;
+  overflow-y: auto;
+}
+
+.main-content {
+  position: relative !important;
+  margin-left: auto !important;
+}
+
+.sidebar-button {
+  // normal button styles here
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+
+  &.active,
+  &:hover,
+  &:active {
+    background-color: #A9E5BB;
+    color: black;
+  }
+}
+.sidebar-text {
+  margin-right: 10px; /* Adjust as needed for spacing */
+}
+
+table {
+  width: 80%;
+  // margin: 40px auto;
+}
+
+table.list {
+  text-align: center;
+  width: 100%;
+}
+
+.table-head {
+  border-bottom: 1px solid lightslategrey;
+  background-color: rgba(128, 128, 128, 0.313);
+
+}
+
+.table-head th {
+  padding: 10px ; /* Adjust the padding size as needed */
+}
+
+.table-head tr:first-child th:first-child {
+  border-top-left-radius: 8px; /* Top left corner radius */
+}
+
+.table-head tr:first-child th:last-child {
+  border-top-right-radius: 8px; /* Top right corner radius */
+}
+
+td {
+  border-bottom: 1px solid rgba(119, 136, 153, 0.321);
+  text-align: center;
+  padding: 12px 15px;
+}
+
+tbody tr:last-child td {
+  border-bottom: none; /* Remove bottom border from the last row of tbody */
+}
+
+// tr:nth-child(even),
+// table.list thead > tr {
+//   background-color: rgba(0, 20, 151, 0.59);
+// }
+
+.report_Container {
+  // min-height: 300px;
+  // max-width: 1200px;
+  margin: 0px auto 0px auto;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 3px 3px 10px rgb(188, 188, 188);
+  // padding: 0px 20px 20px 20px;
+}
+
+.report-body {
+  // overflow-x: auto;
+  // padding: 20px;
+}
+
+.custom-input, .custom-select {
+  width: 320px;
+}
+
+.encrypted-file-div {
+  width: 100%;
+  height: 100%;
+  background-color: lightgray;
+}
+
+.encrypted-file-icon {
+  width: 4rem;
+  height: 4rem;
+  color: gray;
 }

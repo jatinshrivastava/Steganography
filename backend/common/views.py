@@ -1,25 +1,21 @@
 import os
+import random
+import string
 from collections.abc import Iterable
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import AnonymousUser
+from django.db import IntegrityError
 from django.http import JsonResponse
 from django.views import generic
 
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from common.models import SteganographyRecord, UploadedFile
-from common.utils.utils import (
-    check_file_lengths_valid,
-    create_record,
-    decode_message_simple,
-    encode_message_simple,
-    file_to_bitarray,
-    get_magic_number,
-)
+from common.models import SteganographyRecord, UploadedFile, CryptographicKey, FileHash
+from common.utils.utils import Utils
 
 
 class IndexView(generic.TemplateView):
@@ -37,7 +33,7 @@ class RestViewSet(viewsets.ViewSet):
         return Response(
             {
                 "result": "This message comes from the backend. "
-                "If you're seeing this, the REST API is working!"
+                          "If you're seeing this, the REST API is working!"
             },
             status=status.HTTP_200_OK,
         )
@@ -60,6 +56,7 @@ class RestViewSet(viewsets.ViewSet):
             login(request, user)
             # Return user details
             user_details = {
+                "id": user.id,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "email": user.email,
@@ -113,14 +110,14 @@ class RestViewSet(viewsets.ViewSet):
         # Process the uploaded file here (save it, manipulate it, etc.)
         # For demonstration, we'll just return the file name
         # Save file
-        my_file = UploadedFile(file=file_obj)
+        my_file = UploadedFile(file=file_obj, user=request.user)
         my_file.save()
 
         # Get file name
         saved_file = my_file.file
         file_name = os.path.basename(saved_file.path)
-        file_length = len(file_to_bitarray(saved_file.path))
-        magic_number = get_magic_number(saved_file.path)
+        file_length = len(Utils.file_to_bitarray(saved_file.path))
+        magic_number = Utils.get_magic_number(saved_file.path)
 
         return Response(
             {
@@ -158,7 +155,7 @@ class RestViewSet(viewsets.ViewSet):
 
         # Process the encoding logic here
         # Check File Size Valid
-        file_size_valid = check_file_lengths_valid(plaintext_file.path, message_file.path)
+        file_size_valid = Utils.check_file_lengths_valid(plaintext_file.path, message_file.path)
 
         if not file_size_valid:
             return Response(
@@ -169,14 +166,14 @@ class RestViewSet(viewsets.ViewSet):
         # success, modified_file_name = encode_message(plaintext_file_name, message_file_name, starting_bit,
         #                                              length, mode)
 
-        encoded_file = encode_message_simple(
+        encoded_file = Utils.encode_message_simple(
             plaintext_file.path, message_file.path, starting_bit, length
         )
 
         print(f"encoded_file: {encoded_file}")
         if encoded_file is not None:
             # TODO: HANDLE ANONYMOUS USER
-            record = create_record(
+            record = Utils.create_record(
                 request.user, plaintext_file, message_file, encoded_file, starting_bit, length, mode
             )
             print("After save record")
@@ -215,9 +212,9 @@ class RestViewSet(viewsets.ViewSet):
         detail=False,
         methods=["post"],
         permission_classes=[AllowAny],
-        url_path="file/get-files",
+        url_path="file/get-records",
     )
-    def get_files(self, request):
+    def get_records(self, request):
         files: Iterable[SteganographyRecord] = SteganographyRecord.objects.all()
 
         files_list = []
@@ -325,7 +322,7 @@ class RestViewSet(viewsets.ViewSet):
             first_record = SteganographyRecord.objects.get(id=record_id)
 
             # Decode File
-            decoded_file = decode_message_simple(first_record.encoded_file.path)
+            decoded_file = Utils.decode_message_simple(first_record.encoded_file.path)
 
             # Save to UploadFile DB
             my_file = UploadedFile(file=decoded_file)
@@ -348,4 +345,259 @@ class RestViewSet(viewsets.ViewSet):
             print(f"Error occured: {e}")
             return Response(
                 {"status": 404, "message": "Unable to decode file!"}, status=status.HTTP_200_OK
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="crypto/generateKey",
+    )
+    def generate_key(self, request):
+        name = request.data.get("name")
+        try:
+            key = Utils.generate_key()
+            record = CryptographicKey(
+                user=request.user,
+                name=name,
+                key=key.decode()
+            )
+            record.save()
+
+            return Response(
+                {
+                    "status": 200,
+                    "key": key,
+                    "name": name,
+                    "message": "Key generated successfully!",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValueError as e:
+            print(f"Error occured: {e}")
+            return Response(
+                {"status": 400, "message": "Unable to generate key(s)!"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="crypto/getUserKeys",
+    )
+    def getUserKeys(self, request):
+        user_id = request.data.get("user_id")
+        keys: Iterable[CryptographicKey] = CryptographicKey.objects.filter(user__id=user_id)
+
+        try:
+            lst = []
+            for record in keys:
+                data = {
+                    "id": record.id,
+                    "key": record.key,
+                    "name": record.name,
+                    "created": record.created,
+                }
+                lst.append(data)
+
+            return Response(
+                {
+                    "status": 200,
+                    "keys": lst,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValueError as e:
+            print(f"Error occured: {e}")
+            return Response(
+                {"status": 400, "message": "Unable to get key(s)!"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="file/get-files",
+    )
+    def get_files(self, request):
+        files: Iterable[UploadedFile] = UploadedFile.objects.filter(user__id=request.user.id)
+
+        files_list = []
+        for file in files:
+            data = {
+                "id": file.pk,
+                "user_name": file.user.get_full_name(),
+                "file_name": os.path.basename(file.file.name),
+                "created": file.created,
+                "file_path": os.path.relpath(file.file.path)
+
+            }
+
+            files_list.append(data)
+
+        return JsonResponse({"status": 200, "files": files_list}, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[IsAuthenticated],
+        url_path="crypto/hash-file",
+    )
+    def hash_file(self, request):
+        file_id = request.data.get("file_id")
+        uploaded_file = UploadedFile.objects.get(pk=file_id)
+        try:
+            file = uploaded_file.file
+            hashed_file = Utils.hash_file(file.path)
+            file_name = os.path.basename(file.path).split(".")[0]
+
+            # Generate a random 4-character string
+            random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=4))
+            # Create a hash_name from the uploaded_file's name and the random string
+            hash_name = f"{file_name}_{random_string}_hash"
+            record = FileHash(
+                user=request.user,
+                file=uploaded_file,
+                hash=hashed_file,
+                name=hash_name,
+            )
+            record.save()
+
+            return Response(
+                {
+                    "status": 200,
+                    "hash_name": hash_name,
+                    "message": "File hashed successfully!",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValueError as e:
+            print(f"Error occured: {e}")
+            return Response(
+                {"status": 400, "message": "Unable to hash file!"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except IntegrityError as e:
+            print(f"Error occured: {e}")
+            return Response(
+                {"status": 400, "message": "Hash already exists!"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="crypto/encrypt-file",
+    )
+    def encrypt_file(self, request):
+        file_id = request.data.get("file_id")
+        key_id = request.data.get("key_id")
+        uploaded_file: UploadedFile = UploadedFile.objects.get(pk=file_id)
+        key: CryptographicKey = CryptographicKey.objects.get(pk=key_id)
+        try:
+            file = uploaded_file.file
+            encrypted_file = Utils.encrypt_file(file.path, key.key.encode())
+
+            my_file = UploadedFile(file=encrypted_file, user=request.user)
+            my_file.save()
+
+            saved_file = my_file.file
+            file_name = os.path.basename(saved_file.path)
+
+            return Response(
+                {
+                    "status": 200,
+                    "file_name": file_name,
+                    "file_id": my_file.id,
+                    "message": "File encrypted successfully!",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValueError as e:
+            print(f"Error occured: {e}")
+            return Response(
+                {"status": 400, "message": "Unable to encrypt file!"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="crypto/decrypt-file",
+    )
+    def decrypt_file(self, request):
+        file_id = request.data.get("file_id")
+        key_id = request.data.get("key_id")
+        uploaded_file: UploadedFile = UploadedFile.objects.get(pk=file_id)
+        key: CryptographicKey = CryptographicKey.objects.get(pk=key_id)
+        try:
+            file = uploaded_file.file
+            encrypted_file = Utils.decrypt_file(file.path, key.key.encode())
+
+            if encrypted_file is not None:
+                my_file = UploadedFile(file=encrypted_file, user=request.user)
+                my_file.save()
+
+                saved_file = my_file.file
+                file_name = os.path.basename(saved_file.path)
+
+                return Response(
+                    {
+                        "status": 200,
+                        "file_name": file_name,
+                        "file_id": my_file.id,
+                        "message": "File encrypted successfully!",
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                return Response(
+                    {"status": 400, "message": "Unable to encrypt file!"}, status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except ValueError as e:
+            print(f"Error occured: {e}")
+            return Response(
+                {"status": 400, "message": "Unable to encrypt file!"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[IsAuthenticated],
+        url_path="crypto/get-user-hashes",
+    )
+    def get_user_hashes(self, request):
+        hashes: Iterable[FileHash] = FileHash.objects.filter(user__id=request.user.id)
+
+        hashes_list = []
+        try:
+            for hash_data in hashes:
+                data = {
+                    "id": hash_data.pk,
+                    "file_name": os.path.basename(hash_data.file.file.path),
+                    "hash_name": hash_data.name,
+                    "hash": hash_data.hash,
+                    "created": hash_data.created,
+                }
+
+                hashes_list.append(data)
+
+            return Response(
+                {
+                    "status": 200,
+                    "hashes": hashes_list,
+                    "message": "Successful!",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValueError as e:
+            print(f"Error occured: {e}")
+            return Response(
+                {"status": 400, "message": "Unable to get hashes!"}, status=status.HTTP_400_BAD_REQUEST
             )

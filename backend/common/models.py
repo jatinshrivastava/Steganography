@@ -43,12 +43,47 @@ def encoded_directory_path(instance, filename):
 
 
 class UploadedFile(IndexedTimeStampedModel):
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE)
     file = models.FileField(upload_to='uploads/', null=False)  # Use ImageField for image files
 
     # Add other fields as needed
 
     def __str__(self):
-        return f"MyFile {self.pk}"
+        return f"File ID: {self.pk}"
+
+
+# These two auto-delete files from filesystem when they are unneeded:
+
+@receiver(models.signals.post_delete, sender=UploadedFile)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `MediaFile` object is deleted.
+    """
+    if instance.file:
+        if os.path.isfile(instance.file.path):
+            os.remove(instance.file.path)
+
+
+@receiver(models.signals.pre_save, sender=UploadedFile)
+def auto_delete_file_on_change(sender, instance, **kwargs):
+    """
+    Deletes old file from filesystem
+    when corresponding `MediaFile` object is updated
+    with new file.
+    """
+    if not instance.pk:
+        return False
+
+    try:
+        old_file = UploadedFile.objects.get(pk=instance.pk).file
+    except UploadedFile.DoesNotExist:
+        return False
+
+    new_file = instance.file
+    if not old_file == new_file:
+        if os.path.isfile(old_file.path):
+            os.remove(old_file.path)
 
 
 class SteganographyRecord(IndexedTimeStampedModel):
@@ -108,35 +143,20 @@ def auto_delete_file_on_change(sender, instance, **kwargs):
             os.remove(old_file.path)
 
 
-# These two auto-delete files from filesystem when they are unneeded:
+class CryptographicKey(IndexedTimeStampedModel):
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    name = models.CharField(max_length=256, null=False, blank=False, default=None)
+    key = models.CharField(max_length=256, null=False, blank=False, default=None)
 
-@receiver(models.signals.post_delete, sender=UploadedFile)
-def auto_delete_file_on_delete(sender, instance, **kwargs):
-    """
-    Deletes file from filesystem
-    when corresponding `MediaFile` object is deleted.
-    """
-    if instance.file:
-        if os.path.isfile(instance.file.path):
-            os.remove(instance.file.path)
+    class Meta:
+        unique_together = (('user', 'key'), ('user', 'name'))
 
 
-@receiver(models.signals.pre_save, sender=UploadedFile)
-def auto_delete_file_on_change(sender, instance, **kwargs):
-    """
-    Deletes old file from filesystem
-    when corresponding `MediaFile` object is updated
-    with new file.
-    """
-    if not instance.pk:
-        return False
+class FileHash(IndexedTimeStampedModel):
+    user = models.ForeignKey("users.User", on_delete=models.CASCADE)
+    file = models.OneToOneField(UploadedFile, on_delete=models.CASCADE)
+    hash = models.CharField(max_length=64, null=False, blank=False)
+    name = models.CharField(max_length=256, null=False, blank=False)
 
-    try:
-        old_file = UploadedFile.objects.get(pk=instance.pk).file
-    except UploadedFile.DoesNotExist:
-        return False
-
-    new_file = instance.file
-    if not old_file == new_file:
-        if os.path.isfile(old_file.path):
-            os.remove(old_file.path)
+    def __str__(self):
+        return f"FileHash {self.pk}"

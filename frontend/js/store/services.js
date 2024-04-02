@@ -121,10 +121,10 @@ export const Services = {
   ),
 
   // Delete File
-  deleteFile: createAsyncThunk("fileDelete/delete", async ({ file_name }) => {
+  deleteFile: createAsyncThunk("fileDelete/delete", async ({ file_id }) => {
     // Construct the request body
     const requestBody = {
-      file_name,
+      file_id,
     };
 
     // Make the API call

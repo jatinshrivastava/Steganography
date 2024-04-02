@@ -41,6 +41,7 @@ const Crypto = ({ isLoggedIn, user }) => {
   const [activeIndex, setActiveIndex] = useState(0); // initial active index is 0
   const [selectedFileId, setSelectedFileId] = useState(null);
   const [isEncrypting, setIsEncrypting] = useState(true);
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     const action = fetchRestCheck();
@@ -142,9 +143,7 @@ const Crypto = ({ isLoggedIn, user }) => {
   };
 
   const encryptFile = (file_id, key_id) => {
-    dispatch(
-      Services.encryptFile({ file_id: selectedFileId, key_id: selectedKeyId }),
-    )
+    dispatch(Services.encryptFile({ file_id, key_id }))
       .then((response) => {
         if (response.payload.status === 200) {
           setSelectedFileId(null);
@@ -160,9 +159,7 @@ const Crypto = ({ isLoggedIn, user }) => {
   };
 
   const decryptFile = (file_id, key_id) => {
-    dispatch(
-      Services.decryptFile({ file_id: selectedFileId, key_id: selectedKeyId }),
-    )
+    dispatch(Services.decryptFile({ file_id, key_id }))
       .then((response) => {
         if (response.payload.status === 200) {
           setSelectedFileId(null);
@@ -210,6 +207,67 @@ const Crypto = ({ isLoggedIn, user }) => {
       });
   };
 
+  const deleteFile = () => {
+    if (selectedFileId !== null) {
+      dispatch(Services.deleteFile({ file_id: selectedFileId }))
+        .then((response) => {
+          if (response.payload.status === 200) {
+            setSelectedFileId(null);
+            loadFiles();
+          }
+          return 0;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
+  };
+
+  // Prevent default behavior of dragging over an element
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  // Handle file drop
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+
+    // Get the dropped file (assuming only one file is dropped)
+    const droppedFile = e.dataTransfer.files[0];
+
+    // Check if a file is dropped
+    if (droppedFile) {
+      // Call the upload function for the dropped file
+      uploadFile(droppedFile); // Replace 'uploadFile' with your actual upload function
+    }
+  };
+
+  // Handle file input change for traditional upload
+  const handleFileInputChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      uploadFile(selectedFile);
+    }
+  };
+
+  const uploadFile = (selectedFile) => {
+    if (selectedFile) {
+      dispatch(Services.uploadFile(selectedFile))
+        .then((response) => {
+          console.log("Response:", response);
+          // Handle response data here
+          window.location.reload();
+          return 0;
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          // Handle error here
+        });
+    }
+  };
+
   if (loading) {
     return <div>{loading && <Loader />}</div>;
   }
@@ -221,11 +279,11 @@ const Crypto = ({ isLoggedIn, user }) => {
           isOpen={deleteModalIsOpen}
           style={customStyles}
           onAfterClose={() => {
-            setSelectedFileName(null);
+            setSelectedFileId(null);
             setDeleteModelIsOpen(false);
           }}
           onHide={() => {
-            setSelectedFileName(null);
+            setSelectedFileId(null);
             setDeleteModelIsOpen(false);
           }}
           onRequestClose={closeModal}
@@ -242,7 +300,7 @@ const Crypto = ({ isLoggedIn, user }) => {
             <Button
               variant="danger"
               onClick={() => {
-                deleteRecord();
+                deleteFile();
                 closeModal();
               }}
             >
@@ -387,8 +445,55 @@ const Crypto = ({ isLoggedIn, user }) => {
             {isLoggedIn && user ? (
               <div>
                 <div className="row d-flex justify-content-center">
-                  <div className="card shadow-sm mt-5 p-4 w-50">asd</div>
+                  <div
+                    className={`card shadow-sm mt-5 p-4 w-50 ${
+                      dragging
+                        ? "d-flex justify-content-center align-items-center"
+                        : ""
+                    }`}
+                    style={{ minHeight: "200px" }}
+                    onDragEnter={() => setDragging(true)}
+                    onDragLeave={() => setDragging(false)}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
+                    {dragging ? (
+                      <h5 className="text-center mt-2">Drop Here!</h5>
+                    ) : (
+                      <>
+                        <h5 className="text-center mt-2">
+                          Drag your files here to upload
+                        </h5>
+                        <div className="row mt-3">
+                          <div className="col-5">
+                            <hr className="my-2" />
+                          </div>
+                          <div className="col-2 text-center">
+                            <p className="text-muted">OR</p>
+                          </div>
+                          <div className="col-5">
+                            <hr className="my-2" />
+                          </div>
+                        </div>
+                        <div className="text-center mt-2">
+                          <label
+                            className="btn btn-primary"
+                            htmlFor="fileInput"
+                          >
+                            Browse File
+                            <input
+                              id="fileInput"
+                              style={{ display: "none" }}
+                              type="file"
+                              onChange={handleFileInputChange}
+                            />
+                          </label>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
+
                 <h2 className="mt-5">Your Uploads</h2>
                 {userFiles && userFiles.length !== 0 ? (
                   <div className="row mt-2 row-cols-1 row-cols-md-5 g-4">
@@ -453,19 +558,17 @@ const Crypto = ({ isLoggedIn, user }) => {
                                   <DownloadFileButton file={file} />
                                   <Dropdown.Divider />
                                   <Dropdown.Item
-                                  // onClick={() => {
-                                  //   setSelectedFileName(
-                                  //     file.encoded_file.file_name,
-                                  //   );
-                                  //   openModal();
-                                  // }}
+                                    onClick={() => {
+                                      setSelectedFileId(file.id);
+                                      openModal();
+                                    }}
                                   >
                                     Delete
                                   </Dropdown.Item>
                                 </Dropdown.Menu>
                               </Dropdown>
                             </div>
-                            {isEncrypted ? (
+                            {/* {isEncrypted ? (
                               <div className="encrypted-file-div d-flex justify-content-center align-items-center">
                                 <FontAwesomeIcon
                                   className="encrypted-file-icon"
@@ -478,7 +581,11 @@ const Crypto = ({ isLoggedIn, user }) => {
                                 className="card-img-top"
                                 src={file.file_path}
                               />
-                            )}
+                            )} */}
+                            <div className="custom-file-div d-flex justify-content-center align-items-center">
+                              {/* Use the renderFileIcon function to display the file icon */}
+                              {Utils.renderFileIcon(file.file_path)}
+                            </div>
                             <div className="card-body">
                               {/* <p className="card-text">{fileName}</p> */}
                               <div className="d-flex justify-content-between align-items-center">

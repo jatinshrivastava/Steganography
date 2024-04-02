@@ -238,12 +238,12 @@ const Home = ({ isLoggedIn, user }) => {
 
   const handleCancelEncodeSubmit = (e) => {
     e.preventDefault();
-    const plaintext_filename = plaintextData.file_name;
-    const message_filename = messageData.file_name;
+    const plaintext_file_id = plaintextData.file_id;
+    const message_file_id = messageData.file_id;
     // Call two APIs simultaneously
     Promise.all([
-      dispatch(Services.deleteFile({ file_name: plaintext_filename })),
-      dispatch(Services.deleteFile({ file_name: message_filename })),
+      dispatch(Services.deleteFile({ file_id: plaintext_file_id })),
+      dispatch(Services.deleteFile({ file_id: message_file_id })),
     ])
       .then(([response1, response2]) => {
         console.log("Response1:", response1);

@@ -251,14 +251,21 @@ tbody tr:last-child td {
   width: 320px;
 }
 
-.encrypted-file-div {
+.custom-file-div {
   width: 100%;
-  height: 100%;
+  // height: 100%;
+  height: 20vh;
   background-color: lightgray;
 }
 
-.encrypted-file-icon {
+.custom-file-icon {
   width: 4rem;
   height: 4rem;
   color: gray;
+}
+
+.custom-file-image {
+  width: 100%;
+  height: 100%;
+  object-fit: "cover";
 }

@@ -293,9 +293,9 @@ class RestViewSet(viewsets.ViewSet):
         url_path="file/delete",
     )
     def delete_file(self, request):
-        encoded_file_name = request.data.get("file_name")
+        file_id = request.data.get("file_id")
         try:
-            first_record = UploadedFile.objects.filter(file__contains=encoded_file_name).first()
+            first_record = UploadedFile.objects.get(pk=file_id)
 
             # Delete record
             first_record.delete()

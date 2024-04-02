@@ -160,14 +160,17 @@ a {
 .sidebar {
   position: fixed;
   height: 100vh;
+  width: 17vw;
   padding: 20px;
-  margin-left: -6rem !important;
   overflow-y: auto;
+  z-index: 1000;
 }
 
 .main-content {
-  position: relative !important;
+  position: absolute !important;
   margin-left: auto !important;
+  left: 18vw !important;
+  width: 80% !important;
 }
 
 .sidebar-button {

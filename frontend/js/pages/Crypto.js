@@ -402,8 +402,8 @@ const Crypto = ({ isLoggedIn, user }) => {
         </Modal>
       )}
 
-      <div className="row mt-6">
-        <div className="col-2 bg-color-dark-purple sidebar">
+      <div className="row mt-6 wrapper-content">
+        <div className="bg-color-dark-purple sidebar">
           <ul className="list-group ps-0">
             <li key={0} className="list-group-item">
               <Button
@@ -440,135 +440,136 @@ const Crypto = ({ isLoggedIn, user }) => {
             </li>
           </ul>
         </div>
-        {activeIndex === 0 ? (
-          <div className="col-10 mb-5 mt-6 main-content">
-            {isLoggedIn && user ? (
-              <div>
-                <div className="row d-flex justify-content-center">
-                  <div
-                    className={`card shadow-sm mt-5 p-4 w-50 ${
-                      dragging
-                        ? "d-flex justify-content-center align-items-center"
-                        : ""
-                    }`}
-                    style={{ minHeight: "200px" }}
-                    onDragEnter={() => setDragging(true)}
-                    onDragLeave={() => setDragging(false)}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    {dragging ? (
-                      <h5 className="text-center mt-2">Drop Here!</h5>
-                    ) : (
-                      <>
-                        <h5 className="text-center mt-2">
-                          Drag your files here to upload
-                        </h5>
-                        <div className="row mt-3">
-                          <div className="col-5">
-                            <hr className="my-2" />
-                          </div>
-                          <div className="col-2 text-center">
-                            <p className="text-muted">OR</p>
-                          </div>
-                          <div className="col-5">
-                            <hr className="my-2" />
-                          </div>
-                        </div>
-                        <div className="text-center mt-2">
-                          <label
-                            className="btn btn-primary"
-                            htmlFor="fileInput"
-                          >
-                            Browse File
-                            <input
-                              id="fileInput"
-                              style={{ display: "none" }}
-                              type="file"
-                              onChange={handleFileInputChange}
-                            />
-                          </label>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <h2 className="mt-5">Your Uploads</h2>
-                {userFiles && userFiles.length !== 0 ? (
-                  <div className="row mt-2 row-cols-1 row-cols-md-5 g-4">
-                    {userFiles.map((file, index) => {
-                      const fileName = file.file_name;
-                      const date = Utils.formatDate(file.created);
-                      const isEncrypted = fileName.endsWith(".enc");
-                      return (
-                        <div key={file.id} className="col">
-                          <div className="card h-100">
-                            <div className="card-header d-flex justify-content-between align-items-center">
-                              <span>
-                                <p className="card-text">
-                                  {fileName.length > 14
-                                    ? `${fileName.slice(0, 14)}...`
-                                    : fileName}
-                                </p>
-                              </span>
-
-                              <Dropdown>
-                                <Dropdown.Toggle
-                                  className="clear-dropdown-toggle"
-                                  id="dropdown-basic"
-                                  // variant="success"
-                                >
-                                  <FontAwesomeIcon
-                                    className="dropdown-icon"
-                                    icon={faEllipsisVertical}
-                                  />
-                                </Dropdown.Toggle>
-
-                                <Dropdown.Menu>
-                                  <Dropdown.Item
-                                    onClick={() => {
-                                      hashFile(file.id);
-                                    }}
-                                  >
-                                    Hash File
-                                  </Dropdown.Item>
-                                  {/* Conditional rendering for Encrypt or Decrypt option */}
-                                  {isEncrypted ? (
-                                    <Dropdown.Item
-                                      onClick={() => {
-                                        setIsEncrypting(false);
-                                        setSelectedFileId(file.id);
-                                        setKeyModalIsOpen(true);
-                                      }}
-                                    >
-                                      Decrypt File
-                                    </Dropdown.Item>
-                                  ) : (
-                                    <Dropdown.Item
-                                      onClick={() => {
-                                        setIsEncrypting(true);
-                                        setSelectedFileId(file.id);
-                                        setKeyModalIsOpen(true);
-                                      }}
-                                    >
-                                      Encrypt File
-                                    </Dropdown.Item>
-                                  )}
-                                  <DownloadFileButton file={file} />
-                                  <Dropdown.Divider />
-                                  <Dropdown.Item
-                                    onClick={() => {
-                                      setSelectedFileId(file.id);
-                                      openModal();
-                                    }}
-                                  >
-                                    Delete
-                                  </Dropdown.Item>
-                                </Dropdown.Menu>
-                              </Dropdown>
+        <div className="main-content">
+          {activeIndex === 0 ? (
+            <div className="mb-5 mt-6">
+              {isLoggedIn && user ? (
+                <div>
+                  <div className="row d-flex justify-content-center">
+                    <div
+                      className={`card shadow-sm mt-5 p-4 w-50 ${
+                        dragging
+                          ? "d-flex justify-content-center align-items-center"
+                          : ""
+                      }`}
+                      style={{ minHeight: "200px" }}
+                      onDragEnter={() => setDragging(true)}
+                      onDragLeave={() => setDragging(false)}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      {dragging ? (
+                        <h5 className="text-center mt-2">Drop Here!</h5>
+                      ) : (
+                        <>
+                          <h5 className="text-center mt-2">
+                            Drag your files here to upload
+                          </h5>
+                          <div className="row mt-3">
+                            <div className="col-5">
+                              <hr className="my-2" />
                             </div>
-                            {/* {isEncrypted ? (
+                            <div className="col-2 text-center">
+                              <p className="text-muted">OR</p>
+                            </div>
+                            <div className="col-5">
+                              <hr className="my-2" />
+                            </div>
+                          </div>
+                          <div className="text-center mt-2">
+                            <label
+                              className="btn btn-primary"
+                              htmlFor="fileInput"
+                            >
+                              Browse File
+                              <input
+                                id="fileInput"
+                                style={{ display: "none" }}
+                                type="file"
+                                onChange={handleFileInputChange}
+                              />
+                            </label>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <h2 className="mt-5">Your Uploads</h2>
+                  {userFiles && userFiles.length !== 0 ? (
+                    <div className="row mt-2 row-cols-1 row-cols-md-5 g-4">
+                      {userFiles.map((file, index) => {
+                        const fileName = file.file_name;
+                        const date = Utils.formatDate(file.created);
+                        const isEncrypted = fileName.endsWith(".enc");
+                        return (
+                          <div key={file.id} className="col">
+                            <div className="card h-100">
+                              <div className="card-header d-flex justify-content-between align-items-center">
+                                <span>
+                                  <p className="card-text">
+                                    {fileName.length > 14
+                                      ? `${fileName.slice(0, 14)}...`
+                                      : fileName}
+                                  </p>
+                                </span>
+
+                                <Dropdown>
+                                  <Dropdown.Toggle
+                                    className="clear-dropdown-toggle"
+                                    id="dropdown-basic"
+                                    // variant="success"
+                                  >
+                                    <FontAwesomeIcon
+                                      className="dropdown-icon"
+                                      icon={faEllipsisVertical}
+                                    />
+                                  </Dropdown.Toggle>
+
+                                  <Dropdown.Menu>
+                                    <Dropdown.Item
+                                      onClick={() => {
+                                        hashFile(file.id);
+                                      }}
+                                    >
+                                      Hash File
+                                    </Dropdown.Item>
+                                    {/* Conditional rendering for Encrypt or Decrypt option */}
+                                    {isEncrypted ? (
+                                      <Dropdown.Item
+                                        onClick={() => {
+                                          setIsEncrypting(false);
+                                          setSelectedFileId(file.id);
+                                          setKeyModalIsOpen(true);
+                                        }}
+                                      >
+                                        Decrypt File
+                                      </Dropdown.Item>
+                                    ) : (
+                                      <Dropdown.Item
+                                        onClick={() => {
+                                          setIsEncrypting(true);
+                                          setSelectedFileId(file.id);
+                                          setKeyModalIsOpen(true);
+                                        }}
+                                      >
+                                        Encrypt File
+                                      </Dropdown.Item>
+                                    )}
+                                    <DownloadFileButton file={file} />
+                                    <Dropdown.Divider />
+                                    <Dropdown.Item
+                                      onClick={() => {
+                                        setSelectedFileId(file.id);
+                                        openModal();
+                                      }}
+                                    >
+                                      Delete
+                                    </Dropdown.Item>
+                                  </Dropdown.Menu>
+                                </Dropdown>
+                              </div>
+                              {/* {isEncrypted ? (
                               <div className="encrypted-file-div d-flex justify-content-center align-items-center">
                                 <FontAwesomeIcon
                                   className="encrypted-file-icon"
@@ -582,174 +583,178 @@ const Crypto = ({ isLoggedIn, user }) => {
                                 src={file.file_path}
                               />
                             )} */}
-                            <div className="custom-file-div d-flex justify-content-center align-items-center">
-                              {/* Use the renderFileIcon function to display the file icon */}
-                              {Utils.renderFileIcon(file.file_path)}
-                            </div>
-                            <div className="card-body">
-                              {/* <p className="card-text">{fileName}</p> */}
-                              <div className="d-flex justify-content-between align-items-center">
-                                <Link href="/#" id="t-1" title={file.user_name}>
-                                  <Avatar name={file.user_name} />
-                                </Link>
-                                <span>
-                                  <p className="card-text">{date}</p>
-                                </span>
+                              <div className="custom-file-div d-flex justify-content-center align-items-center">
+                                {/* Use the renderFileIcon function to display the file icon */}
+                                {Utils.renderFileIcon(file.file_path)}
+                              </div>
+                              <div className="card-body">
+                                {/* <p className="card-text">{fileName}</p> */}
+                                <div className="d-flex justify-content-between align-items-center">
+                                  <Link
+                                    href="/#"
+                                    id="t-1"
+                                    title={file.user_name}
+                                  >
+                                    <Avatar name={file.user_name} />
+                                  </Link>
+                                  <span>
+                                    <p className="card-text">{date}</p>
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p> No files found!</p>
-                )}
-              </div>
-            ) : null}
-          </div>
-        ) : activeIndex === 1 ? (
-          <div className="col-10 mb-5  main-content">
-            <h2 className="mt-5">Your Keys</h2>
-            <div className="d-flex pt-4 justify-content-between align-items-center">
-              <span className="text-muted">
-                <b>Keys Generated:</b> {keys.length} of 20
-              </span>
-              <Button
-                className="clear-button bg-color-xanthous"
-                disabled={keys.length >= 20}
-                onClick={() => setNameModalIsOpen(true)}
-              >
-                <FontAwesomeIcon icon={faPlus} /> Add Key
-              </Button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p> No files found!</p>
+                  )}
+                </div>
+              ) : null}
             </div>
+          ) : activeIndex === 1 ? (
+            <div className="mb-5">
+              <h2 className="mt-5">Your Keys</h2>
+              <div className="d-flex pt-4 justify-content-between align-items-center">
+                <span className="text-muted">
+                  <b>Keys Generated:</b> {keys.length} of 20
+                </span>
+                <Button
+                  className="clear-button bg-color-xanthous"
+                  disabled={keys.length >= 20}
+                  onClick={() => setNameModalIsOpen(true)}
+                >
+                  <FontAwesomeIcon icon={faPlus} /> Add Key
+                </Button>
+              </div>
 
-            <div className="report_Container mt-3">
-              <div className="report-body">
-                <table className="list">
-                  <thead className="table-head">
-                    <tr>
-                      <th>Sr. no</th>
-                      <th>Name</th>
-                      <th>Key</th>
-                      <th>Created On</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {keys.map((key, index) => {
-                      const date = Utils.formatDate(key.created);
-                      return (
-                        <tr key={key.id} className="">
-                          <td className="">{index + 1}</td>
-                          <td className="">{key.name}</td>
-                          <td className="">{key.key}</td>
-                          <td className="">{date}</td>
+              <div className="report_Container mt-3">
+                <div className="report-body">
+                  <table className="list">
+                    <thead className="table-head">
+                      <tr>
+                        <th>Sr. no</th>
+                        <th>Name</th>
+                        <th>Key</th>
+                        <th>Created On</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {keys.map((key, index) => {
+                        const date = Utils.formatDate(key.created);
+                        return (
+                          <tr key={key.id} className="">
+                            <td className="">{index + 1}</td>
+                            <td className="">{key.name}</td>
+                            <td className="">{key.key}</td>
+                            <td className="">{date}</td>
 
-                          <td>
-                            <Dropdown>
-                              <Dropdown.Toggle
-                                className="clear-dropdown-toggle"
-                                id="dropdown-basic"
-                                // variant="success"
-                              >
-                                <FontAwesomeIcon
-                                  className="dropdown-icon"
-                                  icon={faEllipsisVertical}
-                                />
-                              </Dropdown.Toggle>
-
-                              <Dropdown.Menu>
-                                <Dropdown.Item onClick={() => {}}>
-                                  Rename
-                                </Dropdown.Item>
-                                <Dropdown.Item
-                                  onClick={() => {
-                                    // openModal();
-                                  }}
+                            <td>
+                              <Dropdown>
+                                <Dropdown.Toggle
+                                  className="clear-dropdown-toggle"
+                                  id="dropdown-basic"
+                                  // variant="success"
                                 >
-                                  Delete
-                                </Dropdown.Item>
-                              </Dropdown.Menu>
-                            </Dropdown>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                                  <FontAwesomeIcon
+                                    className="dropdown-icon"
+                                    icon={faEllipsisVertical}
+                                  />
+                                </Dropdown.Toggle>
+
+                                <Dropdown.Menu>
+                                  <Dropdown.Item onClick={() => {}}>
+                                    Rename
+                                  </Dropdown.Item>
+                                  <Dropdown.Item
+                                    onClick={() => {
+                                      // openModal();
+                                    }}
+                                  >
+                                    Delete
+                                  </Dropdown.Item>
+                                </Dropdown.Menu>
+                              </Dropdown>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
-        ) : activeIndex === 2 ? (
-          <div className="col-10 mb-5  main-content">
-            <h2 className="mt-5">Your Hashes</h2>
-            <div className="d-flex pt-4 justify-content-between align-items-center">
-              <span className="text-muted">
-                <b>Hashes Generated:</b> {hashes.length} of 20
-              </span>
-              {/* <Button
+          ) : activeIndex === 2 ? (
+            <div className="mb-5">
+              <h2 className="mt-5">Your Hashes</h2>
+              <div className="d-flex pt-4 justify-content-between align-items-center">
+                <span className="text-muted">
+                  <b>Hashes Generated:</b> {hashes.length} of 20
+                </span>
+                {/* <Button
                 className="clear-button bg-color-xanthous"
                 disabled={keys.length >= 20}
                 onClick={() => setNameModalIsOpen(true)}
               >
                 <FontAwesomeIcon icon={faPlus} /> Add Key
               </Button> */}
-            </div>
+              </div>
 
-            <div className="report_Container mt-3">
-              <div className="report-body">
-                <table className="list">
-                  <thead className="table-head">
-                    <tr>
-                      <th>Sr. no</th>
-                      <th>File Name</th>
-                      <th>Hash Name</th>
-                      <th>Hash Value</th>
-                      <th>Created On</th>
-                      <th />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {hashes.map((hash, index) => {
-                      const date = Utils.formatDate(hash.created);
-                      return (
-                        <tr key={hash.id} className="">
-                          <td className="">{index + 1}</td>
-                          <td className="">{hash.file_name}</td>
-                          <td className="">{hash.hash_name}</td>
-                          <td className="">
-                            {hash.hash.length > 16
-                              ? `${hash.hash.slice(0, 16)}...`
-                              : hash.hash}
-                          </td>
-                          <td className="">{date}</td>
+              <div className="report_Container mt-3">
+                <div className="report-body">
+                  <table className="list">
+                    <thead className="table-head">
+                      <tr>
+                        <th>Sr. no</th>
+                        <th>File Name</th>
+                        <th>Hash Name</th>
+                        <th>Hash Value</th>
+                        <th>Created On</th>
+                        <th />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {hashes.map((hash, index) => {
+                        const date = Utils.formatDate(hash.created);
+                        return (
+                          <tr key={hash.id} className="">
+                            <td className="">{index + 1}</td>
+                            <td className="">{hash.file_name}</td>
+                            <td className="">{hash.hash_name}</td>
+                            <td className="">
+                              {hash.hash.length > 16
+                                ? `${hash.hash.slice(0, 16)}...`
+                                : hash.hash}
+                            </td>
+                            <td className="">{date}</td>
 
-                          <td>
-                            <Dropdown>
-                              <Dropdown.Toggle
-                                className="clear-dropdown-toggle"
-                                id="dropdown-basic"
-                                // variant="success"
-                              >
-                                <FontAwesomeIcon
-                                  className="dropdown-icon"
-                                  icon={faEllipsisVertical}
-                                />
-                              </Dropdown.Toggle>
-
-                              <Dropdown.Menu className="dropdown-menu">
-                                <Dropdown.Item
-                                  onClick={() => {
-                                    Utils.downloadHash(
-                                      hash.hash,
-                                      hash.hash_name,
-                                    );
-                                  }}
+                            <td>
+                              <Dropdown>
+                                <Dropdown.Toggle
+                                  className="clear-dropdown-toggle"
+                                  id="dropdown-basic"
+                                  // variant="success"
                                 >
-                                  Download
-                                </Dropdown.Item>
-                                {/* <Dropdown.Item onClick={() => {}}>
+                                  <FontAwesomeIcon
+                                    className="dropdown-icon"
+                                    icon={faEllipsisVertical}
+                                  />
+                                </Dropdown.Toggle>
+
+                                <Dropdown.Menu className="dropdown-menu">
+                                  <Dropdown.Item
+                                    onClick={() => {
+                                      Utils.downloadHash(
+                                        hash.hash,
+                                        hash.hash_name,
+                                      );
+                                    }}
+                                  >
+                                    Download
+                                  </Dropdown.Item>
+                                  {/* <Dropdown.Item onClick={() => {}}>
                                   Rename
                                 </Dropdown.Item>
                                 <Dropdown.Item
@@ -759,18 +764,19 @@ const Crypto = ({ isLoggedIn, user }) => {
                                 >
                                   Delete
                                 </Dropdown.Item> */}
-                              </Dropdown.Menu>
-                            </Dropdown>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                                </Dropdown.Menu>
+                              </Dropdown>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -2,12 +2,14 @@ import * as Sentry from "@sentry/react";
 import React, { useState } from "react";
 import { Provider } from "react-redux";
 import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
 
 import Header from "./components/header/header";
 import Crypto from "./pages/Crypto";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import configureStore from "./store";
+import "react-toastify/dist/ReactToastify.css";
 
 const store = configureStore({});
 function App() {
@@ -27,6 +29,7 @@ function App() {
           ) : (
             <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
           )}
+          <ToastContainer />
           <Routes>
             <Route
               element={<Home isLoggedIn={isLoggedIn} user={user} />}

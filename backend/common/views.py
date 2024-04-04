@@ -1,6 +1,7 @@
 import os
 import random
 import string
+import time
 from collections.abc import Iterable
 
 from django.contrib.auth import authenticate, login, logout
@@ -356,11 +357,14 @@ class RestViewSet(viewsets.ViewSet):
     def generate_key(self, request):
         name = request.data.get("name")
         try:
+            start_time = time.time()
             key = Utils.generate_key()
+            end_time = time.time()  # Stop the timer
+
             record = CryptographicKey(
                 user=request.user,
                 name=name,
-                key=key.decode()
+                key=key
             )
             record.save()
 
@@ -369,7 +373,36 @@ class RestViewSet(viewsets.ViewSet):
                     "status": 200,
                     "key": key,
                     "name": name,
+                    "time_taken": Utils.get_time_taken(start_time, end_time),
                     "message": "Key generated successfully!",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except ValueError as e:
+            print(f"Error occured: {e}")
+            return Response(
+                {"status": 400, "message": "Unable to generate key(s)!"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[AllowAny],
+        url_path="crypto/deleteKey",
+    )
+    def delete_key(self, request):
+        key_id = request.data.get("key_id")
+        try:
+            first_record = CryptographicKey.objects.get(pk=key_id)
+
+            # Delete record
+            first_record.delete()
+
+            return Response(
+                {
+                    "status": 200,
+                    "message": "Key deleted successfully!",
                 },
                 status=status.HTTP_200_OK,
             )
@@ -450,7 +483,9 @@ class RestViewSet(viewsets.ViewSet):
         uploaded_file = UploadedFile.objects.get(pk=file_id)
         try:
             file = uploaded_file.file
+            start_time = time.time()
             hashed_file = Utils.hash_file(file.path)
+            end_time = time.time()  # Stop the timer
             file_name = os.path.basename(file.path).split(".")[0]
 
             # Generate a random 4-character string
@@ -469,6 +504,7 @@ class RestViewSet(viewsets.ViewSet):
                 {
                     "status": 200,
                     "hash_name": hash_name,
+                    "time_taken": Utils.get_time_taken(start_time, end_time),
                     "message": "File hashed successfully!",
                 },
                 status=status.HTTP_200_OK,
@@ -499,7 +535,9 @@ class RestViewSet(viewsets.ViewSet):
         key: CryptographicKey = CryptographicKey.objects.get(pk=key_id)
         try:
             file = uploaded_file.file
+            start_time = time.time()
             encrypted_file = Utils.encrypt_file(file.path, key.key.encode())
+            end_time = time.time()  # Stop the timer
 
             my_file = UploadedFile(file=encrypted_file, user=request.user)
             my_file.save()
@@ -512,6 +550,7 @@ class RestViewSet(viewsets.ViewSet):
                     "status": 200,
                     "file_name": file_name,
                     "file_id": my_file.id,
+                    "time_taken": Utils.get_time_taken(start_time, end_time),
                     "message": "File encrypted successfully!",
                 },
                 status=status.HTTP_200_OK,
@@ -536,7 +575,9 @@ class RestViewSet(viewsets.ViewSet):
         key: CryptographicKey = CryptographicKey.objects.get(pk=key_id)
         try:
             file = uploaded_file.file
+            start_time = time.time()
             encrypted_file = Utils.decrypt_file(file.path, key.key.encode())
+            end_time = time.time()  # Stop the timer
 
             if encrypted_file is not None:
                 my_file = UploadedFile(file=encrypted_file, user=request.user)
@@ -550,6 +591,7 @@ class RestViewSet(viewsets.ViewSet):
                         "status": 200,
                         "file_name": file_name,
                         "file_id": my_file.id,
+                        "time_taken": Utils.get_time_taken(start_time, end_time),
                         "message": "File encrypted successfully!",
                     },
                     status=status.HTTP_200_OK,

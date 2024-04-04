@@ -3,16 +3,16 @@ import {
   faEllipsisVertical,
   faPlus,
   faKey,
-  faFileShield,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import PropTypes from "prop-types";
 import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import "../../sass/style.scss";
 
 import { Dropdown, Tooltip, OverlayTrigger, Button } from "react-bootstrap";
 import Modal from "react-modal";
+import { Bounce, toast } from "react-toastify";
 
 import DownloadFileButton from "../components/downloadFileButton.js";
 import "../constants/fontawesome";
@@ -23,6 +23,8 @@ import { Services } from "../store/services";
 import { Avatar, Utils } from "../utils/utils.js";
 
 import { faFile, faFileCode } from "@fortawesome/free-regular-svg-icons";
+// import "../../assets/ReactToastify.css";
+import "react-toastify/dist/ReactToastify.css";
 
 Modal.setAppElement(document.getElementById("crypto"));
 
@@ -36,17 +38,17 @@ const Crypto = ({ isLoggedIn, user }) => {
   const [deleteModalIsOpen, setDeleteModelIsOpen] = useState(false);
   const [nameModalIsOpen, setNameModalIsOpen] = useState(false);
   const [keyModalIsOpen, setKeyModalIsOpen] = useState(false);
-  const [labelKeyName, setLabelKeyName] = useState("");
+  const [keyName, setKeyName] = useState("");
   const [selectedKeyId, setSelectedKeyId] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0); // initial active index is 0
   const [selectedFileId, setSelectedFileId] = useState(null);
   const [isEncrypting, setIsEncrypting] = useState(true);
   const [dragging, setDragging] = useState(false);
+  const [selectedData, setSelectedData] = useState(null);
 
   useEffect(() => {
     const action = fetchRestCheck();
     refreshData();
-    console.log("user is", user);
     if (isLoggedIn && user) {
       getKeys(user.id);
     }
@@ -56,6 +58,20 @@ const Crypto = ({ isLoggedIn, user }) => {
   const refreshData = () => {
     loadFiles();
     loadUserHashes();
+  };
+
+  const showToast = (message) => {
+    toast(message, {
+      position: "bottom-right",
+      autoClose: false,
+      hideProgressBar: true,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+      transition: Bounce,
+    });
   };
 
   const Link = ({ id, children, title }) => (
@@ -133,6 +149,7 @@ const Crypto = ({ isLoggedIn, user }) => {
       .then((response) => {
         if (response.payload.status === 200) {
           setSelectedFileId(null);
+          showToast(`Hash File: Took ${response.payload.time_taken} μs!`);
         }
         return 0;
       })
@@ -146,6 +163,7 @@ const Crypto = ({ isLoggedIn, user }) => {
     dispatch(Services.encryptFile({ file_id, key_id }))
       .then((response) => {
         if (response.payload.status === 200) {
+          showToast(`Encrypt File: Took ${response.payload.time_taken} μs!`);
           setSelectedFileId(null);
           setSelectedKeyId(null);
           loadFiles();
@@ -162,6 +180,7 @@ const Crypto = ({ isLoggedIn, user }) => {
     dispatch(Services.decryptFile({ file_id, key_id }))
       .then((response) => {
         if (response.payload.status === 200) {
+          showToast(`Decrypt File: Took ${response.payload.time_taken} μs!`);
           setSelectedFileId(null);
           setSelectedKeyId(null);
           loadFiles();
@@ -178,7 +197,9 @@ const Crypto = ({ isLoggedIn, user }) => {
     dispatch(Services.generateKey({ name }))
       .then((response) => {
         if (response.payload.status === 200) {
-          setLabelKeyName("");
+          setKeyName("");
+          console.log("showing toast!");
+          showToast(`Generate Key: Took ${response.payload.time_taken} μs!`);
           if (isLoggedIn && user) {
             getKeys(user.id);
           }
@@ -188,6 +209,22 @@ const Crypto = ({ isLoggedIn, user }) => {
       .catch((error) => {
         console.error(error);
       });
+  };
+
+  const deleteKey = () => {
+    if (selectedKeyId !== null) {
+      dispatch(Services.deleteKey({ key_id: selectedKeyId }))
+        .then((response) => {
+          if (response.payload.status === 200) {
+            setSelectedKeyId(null);
+            getKeys(user.id);
+          }
+          return 0;
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
   };
 
   const getKeys = (user_id) => {
@@ -290,7 +327,15 @@ const Crypto = ({ isLoggedIn, user }) => {
         >
           <h2>Delete Confirmation</h2>
           <br />
-          <p>Are you sure you want to delete this file?</p>
+          <p>
+            Are you sure you want to delete this{" "}
+            {selectedData === Constants.FileId
+              ? "file"
+              : selectedData === Constants.KeyId
+                ? "key"
+                : ""}{" "}
+            ?
+          </p>
           <br />
           <div className="text-right">
             <Button variant="secondary" onClick={closeModal}>
@@ -300,7 +345,11 @@ const Crypto = ({ isLoggedIn, user }) => {
             <Button
               variant="danger"
               onClick={() => {
-                deleteFile();
+                if (selectedData === Constants.FileId) {
+                  deleteFile();
+                } else if (selectedData === Constants.KeyId) {
+                  deleteKey();
+                }
                 closeModal();
               }}
             >
@@ -317,7 +366,7 @@ const Crypto = ({ isLoggedIn, user }) => {
           style={customStyles}
           onAfterClose={() => {
             setNameModalIsOpen(false);
-            setLabelKeyName("");
+            setKeyName("");
           }}
           onRequestClose={() => setNameModalIsOpen(false)}
         >
@@ -326,8 +375,8 @@ const Crypto = ({ isLoggedIn, user }) => {
             className="custom-input"
             placeholder="Key name"
             type="text"
-            value={labelKeyName}
-            onChange={(e) => setLabelKeyName(e.target.value)}
+            value={keyName}
+            onChange={(e) => setKeyName(e.target.value)}
           />
           <br />
           <div className="d-flex justify-content-end pt-3">
@@ -342,7 +391,7 @@ const Crypto = ({ isLoggedIn, user }) => {
               variant="primary"
               onClick={() => {
                 setNameModalIsOpen(false);
-                generateKey(labelKeyName);
+                generateKey(keyName);
               }}
             >
               Submit
@@ -561,6 +610,7 @@ const Crypto = ({ isLoggedIn, user }) => {
                                     <Dropdown.Item
                                       onClick={() => {
                                         setSelectedFileId(file.id);
+                                        setSelectedData(Constants.FileId);
                                         openModal();
                                       }}
                                     >
@@ -670,7 +720,9 @@ const Crypto = ({ isLoggedIn, user }) => {
                                   </Dropdown.Item>
                                   <Dropdown.Item
                                     onClick={() => {
-                                      // openModal();
+                                      setSelectedKeyId(key.id);
+                                      setSelectedData(Constants.KeyId);
+                                      openModal();
                                     }}
                                   >
                                     Delete

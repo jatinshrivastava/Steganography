@@ -1,3 +1,4 @@
+import base64
 import os
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -13,6 +14,13 @@ from common.models import SteganographyRecord
 
 
 class Utils:
+
+    @staticmethod
+    def get_time_taken(start_time: float, end_time: float) -> float:
+        time_taken = (end_time - start_time) * 1000  # Calculate the time taken in milliseconds
+        # Format the time taken to 3 decimal places
+        time_taken = format(time_taken, '.3f')
+        return float(time_taken)
 
     @staticmethod
     def file_to_bitarray(file_path):
@@ -279,7 +287,7 @@ class Utils:
 
     @staticmethod
     def generate_key():
-        return os.urandom(24)
+        return base64.urlsafe_b64encode(os.urandom(24)).decode()
         # return Fernet.generate_key()
 
     @staticmethod
@@ -295,6 +303,9 @@ class Utils:
 
     @staticmethod
     def encrypt_file(file_path, key):
+        # Decode the key from base64
+        key = base64.urlsafe_b64decode(key)
+
         # Create a Fernet object with the provided key
         cipher_suite = Fernet(key)
 
@@ -319,6 +330,9 @@ class Utils:
 
     @staticmethod
     def decrypt_file(file_path, key):
+        # Decode the key from base64
+        key = base64.urlsafe_b64decode(key)
+
         # Create a Fernet object with the provided key
         cipher_suite = Fernet(key)
 

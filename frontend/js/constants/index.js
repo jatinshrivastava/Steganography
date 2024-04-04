@@ -1,5 +1,7 @@
 export const Constants = {
   BASE_URL: "http://127.0.0.1:8000/",
+  FileId: "FileId",
+  KeyId: "KeyId",
 };
 
 export const customStyles = {

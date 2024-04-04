@@ -148,7 +148,7 @@ export const Services = {
     return res.data;
   }),
 
-  // Generate Key(s)
+  // Generate Key
   generateKey: createAsyncThunk("crypto/generateKey", async ({ name }) => {
     // Construct the request body
     const requestBody = {
@@ -157,6 +157,20 @@ export const Services = {
 
     // Make the API call
     const res = await api.post("/api/rest/crypto/generateKey/", requestBody);
+
+    // Return the response data
+    return res.data;
+  }),
+
+  // Delete Key
+  deleteKey: createAsyncThunk("crypto/deleteKey", async ({ key_id }) => {
+    // Construct the request body
+    const requestBody = {
+      key_id,
+    };
+
+    // Make the API call
+    const res = await api.post("/api/rest/crypto/deleteKey/", requestBody);
 
     // Return the response data
     return res.data;

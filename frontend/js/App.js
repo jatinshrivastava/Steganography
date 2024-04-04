@@ -9,7 +9,7 @@ import Crypto from "./pages/Crypto";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import configureStore from "./store";
-import "react-toastify/dist/ReactToastify.css";
+import "../assets/ReactToastify.css";
 
 const store = configureStore({});
 function App() {

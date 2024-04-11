@@ -521,7 +521,7 @@ const Home = ({ isLoggedIn, user }) => {
           </div>
         ) : null}
 
-        <div>
+        <div className="pt-1">
           <h2 className="mt-5">All Uploads</h2>
           {files && files.length !== 0 ? (
             <div className="row mt-5 row-cols-1 row-cols-md-4 g-4">

@@ -15,6 +15,16 @@ export const Services = {
     }
   }),
 
+  // Signup User
+  signupUser: createAsyncThunk("user/signup", async (data) => {
+    try {
+      const response = await api.post("/api/rest/user/signup/", data);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response.data.error);
+    }
+  }),
+
   // Logout User
   logoutUser: createAsyncThunk("user/logout", async () => {
     try {

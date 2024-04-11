@@ -120,8 +120,8 @@ const Home = ({ isLoggedIn, user }) => {
     }
   };
 
-  const deleteFile = (file_name) => {
-    dispatch(Services.deleteFile({ file_name }))
+  const deleteFile = (file_id) => {
+    dispatch(Services.deleteFile({ file_id }))
       .then((response) => {
         if (response.payload.status === 200) {
           setSelectedFileName(null);
@@ -140,7 +140,7 @@ const Home = ({ isLoggedIn, user }) => {
         .then((response) => {
           if (response.payload.status === 200) {
             downloadFile(response.payload);
-            deleteFile(response.payload.file_name);
+            deleteFile(response.payload.file_id);
           }
           return 0;
         })
@@ -155,14 +155,19 @@ const Home = ({ isLoggedIn, user }) => {
     fetch(url)
       .then((response) => response.blob())
       .then((blob) => {
+        // Extract filename and extension from the file's path
+        const filename = response.file_name;
+        const extension = filename.split(".").pop(); // Get the extension
         // Create a temporary URL for the blob
-        const blobUrl = window.URL.createObjectURL(new Blob([blob]));
+        const blobUrl = window.URL.createObjectURL(blob);
         // Create a link element
         const link = document.createElement("a");
         // Set the link's href attribute to the temporary URL
         link.href = blobUrl;
         // Set the link's download attribute to the filename
-        link.download = response.file_name;
+        link.download = filename;
+        // Set the correct MIME type for the blob
+        link.type = `application/${extension}`;
         // Programmatically click the link to trigger the download
         link.click();
         // Clean up: revoke the temporary URL
@@ -331,10 +336,10 @@ const Home = ({ isLoggedIn, user }) => {
             <div className="row d-flex justify-content-center">
               <div className="card shadow-sm mt-5 p-4 w-50">
                 {plaintextData && plaintextData.file_name ? (
-                  <h4>Plaintext File Uploaded</h4>
+                  <h4>Carrier File Uploaded</h4>
                 ) : (
                   <form onSubmit={handlePlainTextFileSubmit}>
-                    <h3>Upload Plaintext File</h3>
+                    <h3>Upload Carrier File</h3>
                     <input type="file" onChange={handlePlaintextFileChange} />
                     <button
                       className="btn bg-color-dark-purple text-white"

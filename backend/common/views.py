@@ -145,7 +145,7 @@ class RestViewSet(viewsets.ViewSet):
         mode = request.data.get("mode")
 
         # Check if all required parameters are provided
-        if not all([plaintext_file_id, message_file_id, starting_bit, length, mode]):
+        if None in (plaintext_file_id, message_file_id, starting_bit, length, mode):
             return Response(
                 {"error": "All parameters are required"}, status=status.HTTP_400_BAD_REQUEST
             )
@@ -326,7 +326,7 @@ class RestViewSet(viewsets.ViewSet):
             decoded_file = Utils.decode_message_simple(first_record.encoded_file.path)
 
             # Save to UploadFile DB
-            my_file = UploadedFile(file=decoded_file)
+            my_file = UploadedFile(user=request.user, file=decoded_file)
             my_file.save()
 
             # Get File name and path
@@ -338,6 +338,7 @@ class RestViewSet(viewsets.ViewSet):
                     "status": 200,
                     "file_name": file_name,
                     "file_path": os.path.relpath(saved_file.path),
+                    "file_id": my_file.pk
                 },
                 status=status.HTTP_200_OK,
             )

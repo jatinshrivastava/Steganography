@@ -495,11 +495,10 @@ const Home = ({ isLoggedIn, user }) => {
                             </Dropdown.Menu>
                           </Dropdown>
                         </div>
-                        <img
-                          alt="..."
-                          className="card-img-top"
-                          src={file.plaintext_file.file_path}
-                        />
+                        <div className="custom-file-div d-flex justify-content-center align-items-center">
+                          {/* Use the renderFileIcon function to display the file icon */}
+                          {Utils.renderFileIcon(file.message_file.file_path)}
+                        </div>
                         <div className="card-body">
                           {/* <p className="card-text">{fileName}</p> */}
                           <div className="d-flex justify-content-between align-items-center">
@@ -577,11 +576,10 @@ const Home = ({ isLoggedIn, user }) => {
                           </Dropdown.Menu>
                         </Dropdown>
                       </div>
-                      <img
-                        alt="..."
-                        className="card-img-top"
-                        src={file.plaintext_file.file_path}
-                      />
+                      <div className="custom-file-div d-flex justify-content-center align-items-center">
+                        {/* Use the renderFileIcon function to display the file icon */}
+                        {Utils.renderFileIcon(file.message_file.file_path)}
+                      </div>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center">
                           <Link href="/#" id="t-1" title={file.user_name}>

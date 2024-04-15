@@ -6,6 +6,7 @@ from collections.abc import Iterable
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import AnonymousUser
+from django.core.files.base import File
 from django.db import IntegrityError
 from django.http import JsonResponse
 from django.views import generic
@@ -151,8 +152,9 @@ class RestViewSet(viewsets.ViewSet):
         file_length = len(Utils.file_to_bitarray(saved_file.path))
         magic_number = Utils.get_magic_number(saved_file.path)
 
-        return Response(
+        return JsonResponse(
             {
+                "status": 200,
                 "file_name": file_name,
                 "file_id": my_file.id,
                 "bitarray_length": file_length,
@@ -171,63 +173,61 @@ class RestViewSet(viewsets.ViewSet):
         # Extract parameters from the request
         plaintext_file_id = request.data.get("plaintext_file_id")
         message_file_id = request.data.get("message_file_id")
+        message_text = request.data.get("message")
         starting_bit = request.data.get("startingBit")
         length = request.data.get("length")
         mode = request.data.get("mode")
 
         # Check if all required parameters are provided
-        if None in (plaintext_file_id, message_file_id, starting_bit, length, mode):
+        if None in (plaintext_file_id, starting_bit, length, mode):
             return Response(
                 {"error": "All parameters are required"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Fetch file from db:
-        plaintext_file = UploadedFile.objects.get(pk=plaintext_file_id).file
-        message_file = UploadedFile.objects.get(pk=message_file_id).file
-
-        # Process the encoding logic here
-        # Check File Size Valid
-        file_size_valid = Utils.check_file_lengths_valid(plaintext_file.path, message_file.path)
-
-        if not file_size_valid:
+        if not message_file_id and not message_text:
             return Response(
-                {"error": "Size of the plaintext file should be more than the message file!"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "Provide either upload a file or type a message!"},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
-        # success, modified_file_name = encode_message(plaintext_file_name, message_file_name, starting_bit,
-        #                                              length, mode)
+        # Fetch file from db:
+        plaintext_file = UploadedFile.objects.get(pk=plaintext_file_id).file
 
-        encoded_file = Utils.encode_message_simple(
-            plaintext_file.path, message_file.path, starting_bit, length
-        )
+        if message_file_id:
+            message_file = UploadedFile.objects.get(pk=message_file_id).file
 
-        print(f"encoded_file: {encoded_file}")
+            # Check File Size Valid
+            file_size_valid = Utils.check_file_lengths_valid(plaintext_file.path, message_file.path)
+
+            if not file_size_valid:
+                return Response(
+                    {"error": "Size of the plaintext file should be more than the message file!"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # success, modified_file_name = encode_message(plaintext_file_name, message_file_name, starting_bit,
+            #                                              length, mode)
+
+            encoded_file = Utils.encode_message_simple(
+                plaintext_file.path, starting_bit, length, message_file_path=message_file.path)
+
+        else:
+            message_file = None
+            encoded_file = Utils.encode_message_simple(
+                plaintext_file.path, starting_bit, length, message=message_text)
+
         if encoded_file is not None:
-            # TODO: HANDLE ANONYMOUS USER
             record = Utils.create_record(
                 request.user, plaintext_file, message_file, encoded_file, starting_bit, length, mode
             )
-            print("After save record")
-            return Response(
+            return JsonResponse(
                 {
-                    "status": "success",
+                    "status": 200,
                     "message": "Encoding successful",
                     "encoded_file_name": encoded_file.name,
                     # "plaintext_file_name": plaintext_file_name,
                     # "message_file_name": message_file_name,
                     "starting_bit": starting_bit,
-                    "length": length,
-                    "mode": mode,
-                },
-                status=status.HTTP_200_OK,
-            )
-            # For demonstration, we'll just return the parameters received
-            return Response(
-                {
-                    "plaintextFileName": os.path.basename(record.plaintext_file.name),
-                    "messageFileName": os.path.basename(record.message_file.name),
-                    "startingBit": starting_bit,
                     "length": length,
                     "mode": mode,
                 },
@@ -265,10 +265,14 @@ class RestViewSet(viewsets.ViewSet):
                 "file_name": os.path.basename(file.plaintext_file.name),
                 "file_path": os.path.relpath(file.plaintext_file.path),
             }
-            message_data = {
-                "file_name": os.path.basename(file.message_file.name),
-                "file_path": os.path.relpath(file.message_file.path),
-            }
+            message_data = {}
+            try:
+                message_data = {
+                    "file_name": os.path.basename(file.message_file.name),
+                    "file_path": os.path.relpath(file.message_file.path),
+                }
+            except ValueError:
+                pass
             encoded_data = {
                 "file_name": os.path.basename(file.encoded_file.name),
                 "file_path": os.path.relpath(file.encoded_file.path),
@@ -354,25 +358,32 @@ class RestViewSet(viewsets.ViewSet):
             first_record = SteganographyRecord.objects.get(id=record_id)
 
             # Decode File
-            decoded_file = Utils.decode_message_simple(first_record.encoded_file.path)
+            decoded_message = Utils.decode_message_simple(first_record.encoded_file.path)
 
-            # Save to UploadFile DB
-            my_file = UploadedFile(user=request.user, file=decoded_file)
-            my_file.save()
+            # Check if decoded message is a file
+            if isinstance(decoded_message, File):
+                # Save to UploadFile DB
+                my_file = UploadedFile(user=request.user, file=decoded_message)
+                my_file.save()
 
-            # Get File name and path
-            saved_file = my_file.file
-            file_name = os.path.basename(saved_file.path)
+                # Get File name and path
+                saved_file = my_file.file
+                file_name = os.path.basename(saved_file.path)
 
-            return Response(
-                {
-                    "status": 200,
-                    "file_name": file_name,
-                    "file_path": os.path.relpath(saved_file.path),
-                    "file_id": my_file.pk
-                },
-                status=status.HTTP_200_OK,
-            )
+                return Response(
+                    {
+                        "status": 200,
+                        "file_name": file_name,
+                        "file_path": os.path.relpath(saved_file.path),
+                        "file_id": my_file.pk
+                    },
+                    status=status.HTTP_200_OK,
+                )
+            else:
+                # Return message if the decoded content is text
+                return Response(
+                    {"status": 200, "message": decoded_message}, status=status.HTTP_200_OK
+                )
 
         except ValueError as e:
             print(f"Error occured: {e}")

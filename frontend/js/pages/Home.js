@@ -6,7 +6,14 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import "../../sass/style.scss";
 
-import { Dropdown, Tooltip, OverlayTrigger, Button } from "react-bootstrap";
+import {
+  Dropdown,
+  Tooltip,
+  OverlayTrigger,
+  Button,
+  Form,
+  Alert,
+} from "react-bootstrap";
 import Modal from "react-modal";
 
 import DownloadFileButton from "../components/downloadFileButton.js";
@@ -34,6 +41,8 @@ const Home = ({ isLoggedIn, user }) => {
   const [userFiles, setUserFiles] = useState([]);
   const [modalIsOpen, setIsOpen] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState(null);
+  const [isTextMessage, setIsTextMessage] = useState(false);
+  const [textMessage, setTextMessage] = useState("");
 
   const [showBugComponent, setShowBugComponent] = useState(false);
 
@@ -70,6 +79,17 @@ const Home = ({ isLoggedIn, user }) => {
   function handleMessageFileChange(event) {
     setMessageFile(event.target.files[0]);
   }
+
+  const handleSwitchChange = () => {
+    setIsTextMessage((prevState) => {
+      const newState = !prevState;
+      return newState;
+    });
+  };
+
+  const handleTextMessageChange = (event) => {
+    setTextMessage(event.target.value);
+  };
 
   const loadFiles = () => {
     setLoading(true);
@@ -139,8 +159,16 @@ const Home = ({ isLoggedIn, user }) => {
       dispatch(Services.decodeFile({ record_id }))
         .then((response) => {
           if (response.payload.status === 200) {
-            downloadFile(response.payload);
-            deleteFile(response.payload.file_id);
+            // Check if response contains a file to download
+            if (response.payload.file_name && response.payload.file_path) {
+              // Download the file
+              downloadFile(response.payload);
+              // Delete the file after downloading
+              deleteFile(response.payload.file_id);
+            } else if (response.payload.message) {
+              // Handle text message
+              alert(`Decoded message is: ${response.payload.message}`);
+            }
           }
           return 0;
         })
@@ -266,14 +294,21 @@ const Home = ({ isLoggedIn, user }) => {
 
   const handleEncodeSubmit = (e) => {
     e.preventDefault();
+    console.log("isTextMessage is", isTextMessage);
     // Assuming you have the required parameters stored in state variables
     const requestBody = {
       plaintext_file_id: plaintextData.file_id,
-      message_file_id: messageData.file_id,
+      isTextMessage,
       startingBit,
       length,
       mode,
     };
+
+    if (isTextMessage) {
+      requestBody.message = textMessage;
+    } else {
+      requestBody.message_file_id = messageData.file_id;
+    }
 
     dispatch(Services.encodeData(requestBody))
       .then((response) => {
@@ -339,7 +374,7 @@ const Home = ({ isLoggedIn, user }) => {
                   <h4>Carrier File Uploaded</h4>
                 ) : (
                   <form onSubmit={handlePlainTextFileSubmit}>
-                    <h3>Upload Carrier File</h3>
+                    <h3 className="mb-0 pb-2"> Upload Carrier File:</h3>
                     <input type="file" onChange={handlePlaintextFileChange} />
                     <button
                       className="btn bg-color-dark-purple text-white"
@@ -353,21 +388,41 @@ const Home = ({ isLoggedIn, user }) => {
                   <h4>Message File Uploaded</h4>
                 ) : (
                   <form onSubmit={handleMessageFileSubmit}>
-                    <h3>Upload Message File</h3>
-                    <input type="file" onChange={handleMessageFileChange} />
-                    <button
-                      className="btn bg-color-dark-purple text-white"
-                      type="submit"
-                    >
-                      Upload
-                    </button>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <h3 className="mb-0 pb-2">Message:</h3>
+                      <Form.Check
+                        checked={isTextMessage}
+                        id="custom-switch"
+                        label="Text message"
+                        type="switch"
+                        onChange={handleSwitchChange}
+                      />
+                    </div>
+                    {isTextMessage ? (
+                      <input
+                        type="text"
+                        value={textMessage}
+                        onChange={handleTextMessageChange}
+                      />
+                    ) : (
+                      <>
+                        <input type="file" onChange={handleMessageFileChange} />
+                        <button
+                          className="btn bg-color-dark-purple text-white"
+                          type="submit"
+                        >
+                          Upload
+                        </button>
+                      </>
+                    )}
                   </form>
                 )}
 
-                {plaintextData && messageData ? (
+                {(plaintextData && messageData) ||
+                (plaintextData && isTextMessage) ? (
                   <div>
-                    <h3>Embedding Parameters</h3>
-                    <label htmlFor="startingBit">
+                    <h3 className="mb-0 pb-2">Embedding Parameters</h3>
+                    <label className="mb-0 pb-2" htmlFor="startingBit">
                       Starting Bit (S):
                       <input
                         disabled={!plaintextData}
@@ -384,29 +439,34 @@ const Home = ({ isLoggedIn, user }) => {
                       />
                     </label>
                     <br />
-                    <label htmlFor="length">
+                    <label className="mb-0 pb-2" htmlFor="length">
                       Length (L):
                       <input
-                        disabled={!(plaintextData && messageData)}
-                        id="length"
-                        max={
-                          plaintextData &&
-                          plaintextData.bitarray_length &&
-                          messageData &&
-                          messageData.bitarray_length
-                            ? Math.min(
-                                plaintextData.bitarray_length,
-                                messageData.bitarray_length,
-                              )
-                            : 0
+                        disabled={
+                          !(
+                            (plaintextData && messageData) ||
+                            (plaintextData && isTextMessage)
+                          )
                         }
-                        min={1}
+                        id="length"
+                        // max={
+                        //   plaintextData &&
+                        //   plaintextData.bitarray_length &&
+                        //   messageData &&
+                        //   messageData.bitarray_length
+                        //     ? Math.min(
+                        //         plaintextData.bitarray_length,
+                        //         messageData.bitarray_length,
+                        //       )
+                        //     : 0
+                        // }
+                        // min={1}
                         type="number"
                         value={length}
                         onChange={handleLengthChange}
                       />
                     </label>
-                    <p>
+                    {/* <p>
                       Valid range for starting bit: 0 to{" "}
                       {plaintextData.bitarray_length - 1}
                       <br />
@@ -415,7 +475,7 @@ const Home = ({ isLoggedIn, user }) => {
                         plaintextData.bitarray_length,
                         messageData.bitarray_length,
                       )}
-                    </p>
+                    </p> */}
                     <div className="row">
                       <div className="col w-50" />
                       <div className="col w-50 d-flex justify-content-between gap-3">
@@ -497,7 +557,7 @@ const Home = ({ isLoggedIn, user }) => {
                         </div>
                         <div className="custom-file-div d-flex justify-content-center align-items-center">
                           {/* Use the renderFileIcon function to display the file icon */}
-                          {Utils.renderFileIcon(file.message_file.file_path)}
+                          {Utils.renderFileIcon(file.plaintext_file.file_path)}
                         </div>
                         <div className="card-body">
                           {/* <p className="card-text">{fileName}</p> */}

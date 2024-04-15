@@ -92,15 +92,23 @@ export const Services = {
       startingBit,
       length,
       mode,
+      isTextMessage,
+      message,
     }) => {
       // Construct the request body
       const requestBody = {
         plaintext_file_id,
-        message_file_id,
         startingBit,
         length,
         mode,
       };
+
+      // Add message or message_file_id based on isTextMessage
+      if (isTextMessage) {
+        requestBody.message = message;
+      } else {
+        requestBody.message_file_id = message_file_id;
+      }
 
       // Make the API call
       const res = await api.post("/api/rest/file/encode/", requestBody);

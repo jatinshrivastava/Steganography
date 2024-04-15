@@ -192,14 +192,25 @@ class Utils:
             return False, None
 
     @staticmethod
-    def encode_message_simple(plaintext_file_path, message_file_path, skip_bits, length):
-        # Read content of plaintext and message files
+    def encode_message_simple(plaintext_file_path, skip_bits, length, message_file_path=None, message=None):
+        # Read content of plaintext file
         plaintext_content = Utils.read_file(plaintext_file_path)
-        message_content = Utils.read_file(message_file_path)
-
-        # Convert content to binary strings
+        # Convert content to binary string
         plaintext_binary = "".join(format(byte, "08b") for byte in plaintext_content)
-        message_binary = "".join(format(byte, "08b") for byte in message_content)
+
+        # Initialize flag to indicate type of embedding
+        embedding_flag = 0
+
+        if message_file_path is None and message is not None:
+            # Convert message string to binary
+            message_binary = "".join(format(ord(char), "08b") for char in message)
+            embedding_flag = 1  # Set flag to indicate text embedding
+
+        elif message_file_path:
+            # Read content of message file
+            message_content = Utils.read_file(message_file_path)
+            # Convert content to binary string
+            message_binary = "".join(format(byte, "08b") for byte in message_content)
 
         # Embed message into plaintext at specified position with dynamic length adjustment
         j = 0
@@ -209,12 +220,13 @@ class Utils:
             plaintext_binary = plaintext_binary[:i] + message_binary[j] + plaintext_binary[i + 1:]
             j += 1
 
-        # Store the skip_bits, length and original_message_length in the last 48 bits
+        # Update the encoded binary with metadata about the embedded message and embedding flag
         encoded_binary = (
             plaintext_binary
             + format(skip_bits, "016b")
             + format(length, "016b")
             + format(len(message_binary), "016b")
+            + format(embedding_flag, "016b")  # Add embedding flag
         )
 
         # Convert binary string back to bytes
@@ -229,8 +241,6 @@ class Utils:
             + "_encoded"
             + os.path.splitext(plaintext_file_name)[1]
         )
-        # encoded_file = write_file(encoded_file_name, encoded_content)
-
         content_file = ContentFile(file_bytes, name=encoded_file_name)
         return File(content_file)
 
@@ -242,32 +252,50 @@ class Utils:
         # Convert content to binary string
         encoded_binary = "".join(format(byte, "08b") for byte in encoded_content)
 
-        # Extract the skip_bits, length and original_message_length from the last 48 bits
-        skip_bits = int(encoded_binary[-48:-32], 2)
-        length = int(encoded_binary[-32:-16], 2)
-        original_message_length = int(encoded_binary[-16:], 2)
+        # Extract the embedding flag from the encoded binary
+        embedding_flag = int(encoded_binary[-16:], 2)  # Last 16 bits represent the embedding flag
 
-        # Extract the message from the encoded binary string
-        message_binary = ""
-        for i in range(skip_bits, skip_bits + original_message_length * length, length):
-            # Check if index is out of range
-            if i >= len(encoded_binary) - 48:
-                break
-            message_binary += encoded_binary[i]
+        # Extract the skip_bits, length, and original_message_length from the last 64 bits
+        skip_bits = int(encoded_binary[-64:-48], 2)  # Bits 49 to 34 from the end
+        length = int(encoded_binary[-48:-32], 2)  # Bits 33 to 18 from the end
+        original_message_length = int(encoded_binary[-32:-16], 2)  # Bits 17 to 2 from the end
+        # Extract the message from the encoded binary string based on the embedding flag
+        if embedding_flag == 0:  # File embedding
+            message_binary = ""
+            for i in range(skip_bits, skip_bits + original_message_length * length, length):
+                # Check if index is out of range
+                if i >= len(encoded_binary) - 64:
+                    break
+                message_binary += encoded_binary[i]
 
-        # Convert binary string back to bytes
-        file_bytes = bytes(
-            [int(message_binary[i: i + 8], 2) for i in range(0, len(message_binary), 8)]
-        )
+            # Convert binary string back to bytes
+            file_bytes = bytes(
+                [int(message_binary[i: i + 8], 2) for i in range(0, len(message_binary), 8)]
+            )
 
-        # Save decoded message to file
-        encoded_file_name = os.path.basename(encoded_file_path)
-        message_file_name = (
-            os.path.splitext(encoded_file_name)[0] + "_decoded" + os.path.splitext(encoded_file_name)[1]
-        )
-        content_file = ContentFile(file_bytes, name=message_file_name)
+            # Save decoded message to file
+            encoded_file_name = os.path.basename(encoded_file_path)
+            message_file_name = (
+                os.path.splitext(encoded_file_name)[0] + "_decoded" + os.path.splitext(encoded_file_name)[1]
+            )
+            content_file = ContentFile(file_bytes, name=message_file_name)
 
-        return File(content_file)
+            return File(content_file)
+        elif embedding_flag == 1:  # Text embedding
+            # Adjusting for skip bits and length in text embedding
+            message_binary = ""
+            for i in range(skip_bits, skip_bits + original_message_length * length, length):
+                # Check if index is out of range
+                if i >= len(encoded_binary) - 64:
+                    break
+                message_binary += encoded_binary[i]
+
+            # Convert binary string to text
+            message_text = "".join(chr(int(message_binary[i: i + 8], 2)) for i in range(0, len(message_binary), 8))
+            return message_text
+        else:
+            # Handle invalid embedding flag
+            raise ValueError("Invalid embedding flag detected in the encoded file.")
 
     @staticmethod
     def create_record(

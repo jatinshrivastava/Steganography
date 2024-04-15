@@ -89,7 +89,7 @@ def auto_delete_file_on_change(sender, instance, **kwargs):
 class SteganographyRecord(IndexedTimeStampedModel):
     user = models.ForeignKey("users.User", on_delete=models.CASCADE, null=False)
     plaintext_file = models.FileField(upload_to=plaintext_directory_path, null=False)
-    message_file = models.FileField(upload_to=message_directory_path, null=False)
+    message_file = models.FileField(upload_to=message_directory_path, null=True)
     encoded_file = models.FileField(upload_to=encoded_directory_path, null=False)
     skip_bits = models.PositiveIntegerField(null=False)
     length = models.PositiveIntegerField(null=False)

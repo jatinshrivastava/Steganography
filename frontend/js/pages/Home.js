@@ -162,7 +162,8 @@ const Home = ({ isLoggedIn, user }) => {
             // Check if response contains a file to download
             if (response.payload.file_name && response.payload.file_path) {
               // Download the file
-              downloadFile(response.payload);
+              dispatch(Services.downloadFile(response.payload));
+              // downloadFile(response.payload);
               // Delete the file after downloading
               deleteFile(response.payload.file_id);
             } else if (response.payload.message) {

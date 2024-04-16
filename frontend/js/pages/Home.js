@@ -533,6 +533,9 @@ const Home = ({ isLoggedIn, user }) => {
                 {userFiles.map((file, index) => {
                   const fileName = file.encoded_file.file_name;
                   const date = Utils.formatDate(file.created);
+                  const url = Constants.BASE_URL + file.encoded_file.file_path;
+                  console.log("url is ", url);
+
                   return (
                     <div key={file.record_id} className="col">
                       <div className="card h-100">

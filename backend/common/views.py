@@ -317,16 +317,23 @@ class RestViewSet(viewsets.ViewSet):
 
             # Delete record
             plaintext_file_name = os.path.basename(first_record.plaintext_file.path)
-            message_file_name = os.path.basename(first_record.message_file.path)
+
+            # For text encoded message where file does not exist
+            try:
+                message_file_name = os.path.basename(first_record.message_file.path)
+            except ValueError as e:
+                message_file_name = None
+
             first_record.delete()
 
             # Delete Plaintext file
             plaintext_file = UploadedFile.objects.filter(file__contains=plaintext_file_name).first()
             plaintext_file.delete()
 
-            # Delete message file
-            message_file = UploadedFile.objects.filter(file__contains=message_file_name).first()
-            message_file.delete()
+            if message_file_name is not None:
+                # Delete message file
+                message_file = UploadedFile.objects.filter(file__contains=message_file_name).first()
+                message_file.delete()
 
             return Response(
                 {"status": 200, "message": "File deleted successfully!"}, status=status.HTTP_200_OK

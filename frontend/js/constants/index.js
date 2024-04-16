@@ -1,5 +1,5 @@
 export const Constants = {
-  BASE_URL: "http://127.0.0.1:8000/",
+  BASE_URL: `${window.location.origin}/`,
   FileId: "FileId",
   KeyId: "KeyId",
 };

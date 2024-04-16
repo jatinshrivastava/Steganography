@@ -260,12 +260,15 @@ const Home = ({ isLoggedIn, user }) => {
     if (
       !isNaN(value) &&
       value > 0 &&
-      plaintextData !== null &&
-      messageData !== null &&
-      value <=
-        Math.min(plaintextData.bitarray_length, messageData.bitarray_length)
+      plaintextData !== null
+      //  &&
+      // messageData !== null &&
+      // value <=
+      //   Math.min(plaintextData.bitarray_length, messageData.bitarray_length)
     ) {
       setLength(value);
+    } else {
+      setLength(1);
     }
   };
 
@@ -304,10 +307,33 @@ const Home = ({ isLoggedIn, user }) => {
       mode,
     };
 
+    let messageBits;
+
     if (isTextMessage) {
       requestBody.message = textMessage;
+      messageBits = textMessage.length * 8;
     } else {
       requestBody.message_file_id = messageData.file_id;
+      messageBits = messageData.bitarray_length;
+    }
+
+    // Total bits in the file
+    const totalBits = plaintextData.bitarray_length;
+
+    if (length < 1 || startingBit < 0) {
+      alert(
+        "Length must be greater than 0 and skip bits must be non-negative.",
+      );
+      return;
+    }
+
+    // Check if there are enough positions to embed the message
+    const availablePositions = Math.floor((totalBits - startingBit) / length);
+    if (availablePositions < messageBits) {
+      alert(
+        "The message is too large to be embedded in the file with the given length and skip bits.",
+      );
+      return;
     }
 
     dispatch(Services.encodeData(requestBody))
@@ -538,7 +564,7 @@ const Home = ({ isLoggedIn, user }) => {
                                   decodeFile(file.record_id);
                                 }}
                               >
-                                Decode
+                                Extract Message
                               </Dropdown.Item>
                               <DownloadFileButton file={file.encoded_file} />
                               <Dropdown.Divider />

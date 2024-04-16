@@ -55,6 +55,27 @@ export const Services = {
     return res.data;
   }),
 
+  // File Download
+  downloadFile: createAsyncThunk("fileDownload/download", async (file) => {
+    const res = await api.get(
+      `/api/rest/file/download/?file_path=${file.file_path}`,
+      {
+        responseType: "blob", // Important for correct file download
+      },
+    );
+
+    // Create a blob from the response for download
+    const blob = new Blob([res.data], { type: res.headers["content-type"] });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", file.file_name); // Use the file name from the server here
+    document.body.appendChild(link);
+    link.click();
+
+    return res.data;
+  }),
+
   // Get records
   getRecords: createAsyncThunk("records/get", async () => {
     const res = await api.post("/api/rest/file/get-records/");

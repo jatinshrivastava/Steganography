@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.base import File
 from django.db import IntegrityError
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.views import generic
 
 from rest_framework import status, viewsets
@@ -162,6 +162,22 @@ class RestViewSet(viewsets.ViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=False, methods=['get'], url_path='file/download')
+    def download_file(self, request, pk=None):
+        # Get the file path from the request
+        file_path = request.GET.get('file_path')
+
+        if file_path is None:
+            return Response({"error": "No file path provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Open the file
+        file = open(file_path, 'rb')
+
+        # Create a FileResponse instance to serve the file
+        response = FileResponse(file, as_attachment=True)
+
+        return response
 
     @action(
         detail=False,

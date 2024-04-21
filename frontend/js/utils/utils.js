@@ -15,6 +15,12 @@ export const Utils = {
     return dateObject.toLocaleDateString("en-US", options);
   },
 
+  isImage: (filePath) => {
+    const imageExtensions = ["jpeg", "jpg", "png", "gif", "svg"];
+    const fileExtension = filePath.split(".").pop().toLowerCase();
+    return imageExtensions.includes(fileExtension);
+  },
+
   renderFileIcon: (filePath) => {
     const fileName = filePath.split("/").pop(); // Extracting the file name from the path
     const fileExtension = fileName.split(".").pop().toLowerCase(); // Extracting the file extension

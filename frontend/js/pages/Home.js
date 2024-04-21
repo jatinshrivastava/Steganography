@@ -665,7 +665,7 @@ const Home = ({ isLoggedIn, user }) => {
                       </div>
                       <div className="custom-file-div d-flex justify-content-center align-items-center">
                         {/* Use the renderFileIcon function to display the file icon */}
-                        {Utils.renderFileIcon(file.message_file.file_path)}
+                        {Utils.renderFileIcon(file.plaintext_file.file_path)}
                       </div>
                       <div className="card-body">
                         <div className="d-flex justify-content-between align-items-center">

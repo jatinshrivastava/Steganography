@@ -93,7 +93,7 @@ function Header(props) {
                     <li>
                       <a
                         className="text-white"
-                        href={handleLogout}
+                        href="/#"
                         onClick={handleLogout}
                       >
                         Logout

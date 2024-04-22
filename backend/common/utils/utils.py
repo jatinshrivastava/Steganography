@@ -315,7 +315,7 @@ class Utils:
 
     @staticmethod
     def generate_key():
-        return base64.urlsafe_b64encode(os.urandom(24)).decode()
+        return Fernet.generate_key().decode()
         # return Fernet.generate_key()
 
     @staticmethod
@@ -332,7 +332,8 @@ class Utils:
     @staticmethod
     def encrypt_file(file_path, key):
         # Decode the key from base64
-        key = base64.urlsafe_b64decode(key)
+        # key = base64.urlsafe_b64decode(key)
+
 
         # Create a Fernet object with the provided key
         cipher_suite = Fernet(key)

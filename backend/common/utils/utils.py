@@ -203,6 +203,18 @@ class Utils:
 
         if message_file_path is None and message is not None:
             # Convert message string to binary
+            # if message.isdigit():  # Check if the message is a complete integer
+            #     print('dsad')
+            #     # Convert message string to binary
+            #     message_binary = bin(int(message))[2:].zfill(8)  # Convert integer to binary string and pad with leading zeros
+            #     print(f"message_binary is {message_binary}")
+            # else:
+            #     print('chat')
+            #     # Convert message string to binary
+            #     message_binary = "".join(format(ord(char), "08b") for char in message)
+            # embedding_flag = 1  # Set flag to indicate text embedding
+
+
             message_binary = "".join(format(ord(char), "08b") for char in message)
             embedding_flag = 1  # Set flag to indicate text embedding
 

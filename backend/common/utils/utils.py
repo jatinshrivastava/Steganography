@@ -191,6 +191,9 @@ class Utils:
         else:
             return False, None
 
+    # 0 - File Embedding
+    # 1 - Text Embedding
+    # 2 - Binary Embedding
     @staticmethod
     def encode_message_simple(plaintext_file_path, skip_bits, length, message_file_path=None, message=None):
         # Read content of plaintext file
@@ -202,9 +205,15 @@ class Utils:
         embedding_flag = 0
 
         if message_file_path is None and message is not None:
-            # Convert message string to binary
-            message_binary = "".join(format(ord(char), "08b") for char in message)
-            embedding_flag = 1  # Set flag to indicate text embedding
+            # Check if the message is binary
+            if all(bit in '01' for bit in message):
+                message_binary = message  # Treat message as binary
+                embedding_flag = 2 # Binary Text Embedding
+                print(f"message_binary is {message_binary}")
+            else:
+                # Convert message string to binary
+                message_binary = "".join(format(ord(char), "08b") for char in message)
+                embedding_flag = 1  # Set flag to indicate text embedding
 
         elif message_file_path:
             # Read content of message file
@@ -293,6 +302,14 @@ class Utils:
             # Convert binary string to text
             message_text = "".join(chr(int(message_binary[i: i + 8], 2)) for i in range(0, len(message_binary), 8))
             return message_text
+        elif embedding_flag == 2:  # Binary embedding
+            message_binary = ""
+            for i in range(skip_bits, skip_bits + original_message_length * length, length):
+                # Check if index is out of range
+                if i >= len(encoded_binary) - 64:
+                    break
+                message_binary += encoded_binary[i]
+            return message_binary
         else:
             # Handle invalid embedding flag
             raise ValueError("Invalid embedding flag detected in the encoded file.")

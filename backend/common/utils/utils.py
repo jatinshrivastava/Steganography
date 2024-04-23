@@ -376,7 +376,7 @@ class Utils:
     @staticmethod
     def decrypt_file(file_path, key):
         # Decode the key from base64
-        key = base64.urlsafe_b64decode(key)
+        # key = base64.urlsafe_b64decode(key)
 
         # Create a Fernet object with the provided key
         cipher_suite = Fernet(key)

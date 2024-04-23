@@ -209,7 +209,6 @@ class Utils:
             if all(bit in '01' for bit in message):
                 message_binary = message  # Treat message as binary
                 embedding_flag = 2 # Binary Text Embedding
-                print(f"message_binary is {message_binary}")
             else:
                 # Convert message string to binary
                 message_binary = "".join(format(ord(char), "08b") for char in message)
@@ -332,7 +331,7 @@ class Utils:
 
     @staticmethod
     def generate_key():
-        return base64.urlsafe_b64encode(os.urandom(24)).decode()
+        return Fernet.generate_key().decode()
         # return Fernet.generate_key()
 
     @staticmethod
@@ -349,7 +348,8 @@ class Utils:
     @staticmethod
     def encrypt_file(file_path, key):
         # Decode the key from base64
-        key = base64.urlsafe_b64decode(key)
+        # key = base64.urlsafe_b64decode(key)
+
 
         # Create a Fernet object with the provided key
         cipher_suite = Fernet(key)

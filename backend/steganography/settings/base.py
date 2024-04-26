@@ -216,6 +216,10 @@ CSP_FONT_SRC = [
     "'unsafe-inline'",
 ] + [f"*{host}" if host.startswith(".") else host for host in ALLOWED_HOSTS]
 CSP_IMG_SRC = ["'self'"]
+CSP_IMG_SRC += ['blob:']
+DJANGO_PROD_SERVER_URL = "https://steganography-6f38.onrender.com"
+CSP_IMG_SRC += [DJANGO_PROD_SERVER_URL]
+
 
 # Django-defender
 DEFENDER_LOGIN_FAILURE_LIMIT = 3

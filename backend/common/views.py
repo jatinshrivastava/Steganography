@@ -223,6 +223,41 @@ class RestViewSet(viewsets.ViewSet):
 
         return response
 
+    @action(detail=False, methods=['get'], url_path='file/uploaded/get')
+    def get_uploaded_file(self, request, pk=None):
+        # Get the file path from the request
+        file_path = request.GET.get('file_path')
+
+        if file_path is None:
+            return Response({"error": "No file path provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        file_name = os.path.basename(file_path)
+        print(f'file name is {file_name}')
+
+        try:
+            first_record = UploadedFile.objects.filter(
+                Q(file__icontains=file_name) |
+                Q(file__icontains=file_name) |
+                Q(file__icontains=file_name)
+            ).first()
+        except ObjectDoesNotExist:
+            return Response({"error": "File not found in database"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Open the file
+        if first_record is None:
+            return Response({"error": "No record found for the file"}, status=status.HTTP_404_NOT_FOUND)
+
+
+        try:
+            file = open(first_record.file.path, 'rb')
+        except:
+            return Response({"error": "Error opening file"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Create a FileResponse instance to serve the file
+        response = FileResponse(file, as_attachment=False)
+
+        return response
+
     @action(
         detail=False,
         methods=["post"],

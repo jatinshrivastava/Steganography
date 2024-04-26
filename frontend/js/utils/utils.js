@@ -21,10 +21,9 @@ export const Utils = {
     return imageExtensions.includes(fileExtension);
   },
 
-  renderFileIcon: (filePath) => {
+  renderFileIcon: (filePath, url) => {
     const fileName = filePath.split("/").pop(); // Extracting the file name from the path
     const fileExtension = fileName.split(".").pop().toLowerCase(); // Extracting the file extension
-
     switch (fileExtension) {
       case "jpeg":
       case "jpg":
@@ -32,11 +31,7 @@ export const Utils = {
       case "gif":
       case "svg":
         return (
-          <img
-            alt="..."
-            className="card-img-top custom-file-image"
-            src={filePath}
-          />
+          <img alt="..." className="card-img-top custom-file-image" src={url} />
         );
       case "enc":
         return (

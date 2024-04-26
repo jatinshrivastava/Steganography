@@ -45,6 +45,7 @@ const Crypto = ({ isLoggedIn, user }) => {
   const [isEncrypting, setIsEncrypting] = useState(true);
   const [dragging, setDragging] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
+  const [fileUrlDict, setFileUrlDict] = useState({});
 
   useEffect(() => {
     const action = fetchRestCheck();
@@ -108,6 +109,7 @@ const Crypto = ({ isLoggedIn, user }) => {
 
           // Set the filtered files into state
           setUserFiles(userFiles);
+          fetchFilesConcurrently(allFiles);
         }
         return 0;
       })
@@ -118,6 +120,42 @@ const Crypto = ({ isLoggedIn, user }) => {
         setLoading(false);
       });
   };
+
+  const fetchFilesConcurrently = (files) => {
+    const promises = files.map((file) =>
+      dispatch(Services.getUploadedFile(file)),
+    );
+    Promise.all(promises)
+      .then((action) => {
+        const dict = {};
+        action.forEach((action, index) => {
+          const file = files[index];
+          if (action.type.endsWith("fulfilled")) {
+            dict[file.id] = action.payload;
+          }
+        });
+
+        setFileUrlDict(dict);
+        return 0;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+  };
+
+  // const getFileUrl = async (file) => {
+  //   dispatch(Services.getUploadedFile(file))
+  //     .then((action) => {
+  //       if (action.type.endsWith("fulfilled")) {
+  //         console.log("action is ", action);
+  //         return action.payload;
+  //       }
+  //       return 0;
+  //     })
+  //     .catch((error) => {
+  //       console.error(error);
+  //     });
+  // };
 
   const loadUserHashes = () => {
     setLoading(true);
@@ -551,6 +589,7 @@ const Crypto = ({ isLoggedIn, user }) => {
                         const fileName = file.file_name;
                         const date = Utils.formatDate(file.created);
                         const isEncrypted = fileName.endsWith(".enc");
+                        const url = fileUrlDict[file.id];
                         return (
                           <div key={file.id} className="col">
                             <div className="card h-100">
@@ -635,7 +674,7 @@ const Crypto = ({ isLoggedIn, user }) => {
                             )} */}
                               <div className="custom-file-div d-flex justify-content-center align-items-center">
                                 {/* Use the renderFileIcon function to display the file icon */}
-                                {Utils.renderFileIcon(file.file_path)}
+                                {Utils.renderFileIcon(file.file_path, url)}
                               </div>
                               <div className="card-body">
                                 {/* <p className="card-text">{fileName}</p> */}

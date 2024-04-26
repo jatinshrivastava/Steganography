@@ -93,6 +93,23 @@ export const Services = {
     return url;
   }),
 
+  // Get Uploaded File
+  getUploadedFile: createAsyncThunk("fileUploadedGet/get", async (file) => {
+    const res = await api.get(
+      `/api/rest/file/uploaded/get/?file_path=${file.file_path}`,
+      {
+        responseType: "blob", // Important for correct file download
+      },
+    );
+
+    // Create a blob from the response
+    const blob = new Blob([res.data], { type: res.headers["content-type"] });
+    const url = window.URL.createObjectURL(blob);
+
+    // Return the URL to the blob
+    return url;
+  }),
+
   // Get records
   getRecords: createAsyncThunk("records/get", async () => {
     const res = await api.post("/api/rest/file/get-records/");
